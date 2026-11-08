@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:obd_vision/core/constants/app_assets.dart';
 import 'package:obd_vision/core/constants/app_colors.dart';
 import 'package:obd_vision/core/constants/app_routes.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
 import 'package:obd_vision/features/onboarding/domain/models/onboarding_model.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 
 /// Pixel-Perfect Onboarding Screen strictly matching the Figma specification
 /// (Nodes: 52:8041, 61:8289, 61:8321 on Canvas 390x844).
@@ -193,6 +195,9 @@ class _OnboardingPageState extends State<OnboardingPage>
   }
 
   void _finish() {
+    if (di.sl.isRegistered<AppPreferences>()) {
+      di.sl<AppPreferences>().setHasSeenOnboarding(true);
+    }
     if (widget.onFinished != null) {
       widget.onFinished!();
     } else {

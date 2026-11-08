@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:obd_vision/features/diagnostics/presentation/pages/home_cockpit_
 
 void main() {
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     await di.initDependencies();
   });
 

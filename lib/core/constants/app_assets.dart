@@ -6,8 +6,14 @@ class AppAssets {
   // Base paths
   static const String _imagesPath = 'assets/images';
   static const String _iconsPath = 'assets/icons';
+  static const String _soundsPath = 'assets/sounds';
+
+  // Audio / Sound FX
+  static const String carStartupSound = '$_soundsPath/car_startup.mp3';
 
   // Splash & Brand Assets
+  static const String appIcon = '$_imagesPath/app_icon.png';
+  static const String appIconForeground = '$_imagesPath/app_icon_foreground.png';
   static const String splashLogoFull = '$_imagesPath/splash_logo_full.png';
   static const String appLogoMark = '$_imagesPath/app_logo_mark.png';
   static const String carSilhouette = '$_imagesPath/car_silhouette.png';

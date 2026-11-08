@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:obd_vision/core/constants/app_assets.dart';
@@ -14,11 +15,13 @@ import 'package:obd_vision/core/constants/app_colors.dart';
 class SplashPage extends StatefulWidget {
   final VoidCallback? onAnimationComplete;
   final Duration animationDuration;
+  final bool enableSound;
 
   const SplashPage({
     super.key,
     this.onAnimationComplete,
-    this.animationDuration = const Duration(milliseconds: 3000),
+    this.animationDuration = const Duration(milliseconds: 4200),
+    this.enableSound = true,
   });
 
   @override
@@ -28,6 +31,7 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  AudioPlayer? _audioPlayer;
 
   // Stage 1 & 2: Rotation & seam glow
   late final Animation<double> _rotationAnimation;
@@ -175,17 +179,42 @@ class _SplashPageState extends State<SplashPage>
       }
     });
 
+    if (widget.enableSound) {
+      _playStartupSound();
+    }
+
     _controller.forward();
+  }
+
+  Future<void> _playStartupSound() async {
+    try {
+      _audioPlayer = AudioPlayer();
+      await _audioPlayer?.setVolume(1.0);
+      try {
+        await _audioPlayer?.play(AssetSource('sounds/car_startup.mp3'));
+      } catch (_) {
+        await _audioPlayer?.play(AssetSource('1109.MP3'));
+      }
+    } catch (e) {
+      debugPrint('Startup audio playback notice: $e');
+    }
   }
 
   void _handleComplete() {
     if (_hasNavigated) return;
     _hasNavigated = true;
+    try {
+      _audioPlayer?.stop();
+    } catch (_) {}
     widget.onAnimationComplete?.call();
   }
 
   @override
   void dispose() {
+    try {
+      _audioPlayer?.stop();
+      _audioPlayer?.dispose();
+    } catch (_) {}
     _controller.dispose();
     super.dispose();
   }

@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
 import 'package:obd_vision/features/diagnostics/data/datasources/mock_obd_datasource.dart';
 import 'package:obd_vision/features/diagnostics/data/repositories/obd_repository_impl.dart';
 import 'package:obd_vision/features/diagnostics/domain/repositories/i_obd_repository.dart';
@@ -10,7 +12,13 @@ import 'package:obd_vision/features/diagnostics/presentation/bloc/dashboard_cubi
 
 final sl = GetIt.instance;
 
-Future<void> initDependencies() async {
+Future<void> initDependencies({SharedPreferences? preferences}) async {
+  // External & Local Storage
+  final SharedPreferences prefs =
+      preferences ?? await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferences>(() => prefs);
+  sl.registerLazySingleton<AppPreferences>(() => AppPreferences(sl()));
+
   // Domain Services
   sl.registerLazySingleton<RuleEngine>(() => const RuleEngine());
 

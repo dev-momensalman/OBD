@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/constants/app_routes.dart';
+import 'core/services/app_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'features/diagnostics/presentation/bloc/dashboard_cubit.dart';
 import 'features/diagnostics/presentation/pages/home_cockpit_page.dart';
@@ -17,6 +18,14 @@ void main() async {
 class ObdVisionApp extends StatelessWidget {
   const ObdVisionApp({super.key});
 
+  void _navigateAfterSplash(BuildContext context) {
+    final hasSeenOnboarding = di.sl.isRegistered<AppPreferences>()
+        ? di.sl<AppPreferences>().hasSeenOnboarding
+        : false;
+    final nextRoute = hasSeenOnboarding ? AppRoutes.home : AppRoutes.onboarding;
+    Navigator.of(context).pushReplacementNamed(nextRoute);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,9 +35,7 @@ class ObdVisionApp extends StatelessWidget {
       initialRoute: AppRoutes.splash,
       routes: {
         AppRoutes.splash: (context) => SplashPage(
-              onAnimationComplete: () {
-                Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
-              },
+              onAnimationComplete: () => _navigateAfterSplash(context),
             ),
         AppRoutes.onboarding: (_) => const OnboardingPage(),
         AppRoutes.home: (_) => BlocProvider(
@@ -40,9 +47,7 @@ class ObdVisionApp extends StatelessWidget {
         if (settings.name == AppRoutes.splash) {
           return MaterialPageRoute(
             builder: (context) => SplashPage(
-              onAnimationComplete: () {
-                Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
-              },
+              onAnimationComplete: () => _navigateAfterSplash(context),
             ),
           );
         }

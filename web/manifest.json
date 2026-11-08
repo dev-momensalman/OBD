@@ -1,6 +1,6 @@
 {
-    "name": "your_flutter_app",
-    "short_name": "your_flutter_app",
+    "name": "OBD Vision",
+    "short_name": "OBD Vision",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
