@@ -25,8 +25,10 @@ class ObdVisionApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       initialRoute: AppRoutes.splash,
       routes: {
-        AppRoutes.splash: (_) => SplashPage(
-              onAnimationComplete: () {},
+        AppRoutes.splash: (context) => SplashPage(
+              onAnimationComplete: () {
+                Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
+              },
             ),
         AppRoutes.onboarding: (_) => const OnboardingPage(),
         AppRoutes.home: (_) => BlocProvider(

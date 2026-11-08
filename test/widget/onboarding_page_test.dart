@@ -34,4 +34,48 @@ void main() {
 
     expect(finished, isTrue);
   });
+
+  testWidgets('Get Started button morphs into circular ball and expands across screen', (tester) async {
+    bool finished = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OnboardingPage(
+          onFinished: () {
+            finished = true;
+          },
+        ),
+      ),
+    );
+
+    // Page 1 -> Next
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    // Page 2 -> Next
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    // Page 3: "Connect, Discover, Understand" and "Get Started"
+    expect(find.text('Connect, Discover, Understand'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
+
+    // Tap "Get Started"
+    await tester.tap(find.text('Get Started'));
+    await tester.pump(); // Start morph animation
+
+    // Advance 350ms (Phase 1: Button morphs into 48px ball)
+    await tester.pump(const Duration(milliseconds: 350));
+
+    // Advance to 750ms (Phase 3: OnboardingExpandPainter active and expanding with glowing rim)
+    await tester.pump(const Duration(milliseconds: 400));
+    final expandPainterFinder = find.byWidgetPredicate(
+      (widget) => widget is CustomPaint && widget.painter is OnboardingExpandPainter,
+    );
+    expect(expandPainterFinder, findsOneWidget);
+
+    // Complete the animation
+    await tester.pumpAndSettle();
+    expect(finished, isTrue);
+  });
 }
