@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:your_flutter_app/core/errors/failures.dart';
-import 'package:your_flutter_app/core/utils/result.dart';
+import 'package:obd_vision/core/errors/failures.dart';
+import 'package:obd_vision/core/utils/result.dart';
 
 void main() {
   group('Result<S, F> Pattern Matching & Type Safety', () {

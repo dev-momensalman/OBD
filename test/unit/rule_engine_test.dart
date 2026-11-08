@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:your_flutter_app/domain/entities/dtc_fault.dart';
-import 'package:your_flutter_app/domain/entities/measured_evidence.dart';
-import 'package:your_flutter_app/domain/services/rule_engine.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/dtc_fault.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/measured_evidence.dart';
+import 'package:obd_vision/features/diagnostics/domain/services/rule_engine.dart';
 
 void main() {
   group('RuleEngine Deterministic Safety Checks', () {

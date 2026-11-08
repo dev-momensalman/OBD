@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:your_flutter_app/data/datasources/mock_obd_datasource.dart';
-import 'package:your_flutter_app/data/repositories/obd_repository_impl.dart';
-import 'package:your_flutter_app/domain/services/rule_engine.dart';
+import 'package:obd_vision/features/diagnostics/data/datasources/mock_obd_datasource.dart';
+import 'package:obd_vision/features/diagnostics/data/repositories/obd_repository_impl.dart';
+import 'package:obd_vision/features/diagnostics/domain/services/rule_engine.dart';
 
 void main() {
   group('ObdRepositoryImpl with EGM Hardened Error Handling', () {

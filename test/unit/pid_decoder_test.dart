@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:your_flutter_app/core/utils/pid_decoder.dart';
+import 'package:obd_vision/core/utils/pid_decoder.dart';
 
 void main() {
   group('PidDecoder Mathematical Formulas', () {

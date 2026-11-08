@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_assets.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:obd_vision/core/constants/app_assets.dart';
+import 'package:obd_vision/core/constants/app_colors.dart';
 
 /// Animated Splash Screen matching the 4-stage sequence in Figma (Nodes 40:2021, 44:7627, 44:7614, 44:7619).
 ///

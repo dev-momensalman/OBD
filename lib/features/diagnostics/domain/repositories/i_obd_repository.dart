@@ -1,5 +1,5 @@
-import '../../core/errors/failures.dart';
-import '../../core/utils/result.dart';
+import 'package:obd_vision/core/errors/failures.dart';
+import 'package:obd_vision/core/utils/result.dart';
 import '../entities/telemetry_snapshot.dart';
 import '../entities/dtc_fault.dart';
 import '../entities/diagnostic_report.dart';

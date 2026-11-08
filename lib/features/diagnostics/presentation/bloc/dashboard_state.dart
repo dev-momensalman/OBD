@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/telemetry_snapshot.dart';
-import '../../domain/entities/diagnostic_report.dart';
-import '../../domain/entities/connection_status.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/telemetry_snapshot.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/diagnostic_report.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/connection_status.dart';
 
 enum ScanStatus { idle, scanning, completed, error }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:your_flutter_app/presentation/pages/splash_page.dart';
+import 'package:obd_vision/features/splash/presentation/pages/splash_page.dart';
 
 void main() {
   testWidgets('SplashPage renders elements and triggers onAnimationComplete', (tester) async {

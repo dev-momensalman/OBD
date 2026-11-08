@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/utils/result.dart';
-import '../../domain/usecases/stream_live_telemetry_usecase.dart';
-import '../../domain/usecases/run_diagnostic_scan_usecase.dart';
-import '../../domain/usecases/get_connection_status_usecase.dart';
+import 'package:obd_vision/core/utils/result.dart';
+import 'package:obd_vision/features/diagnostics/domain/usecases/stream_live_telemetry_usecase.dart';
+import 'package:obd_vision/features/diagnostics/domain/usecases/run_diagnostic_scan_usecase.dart';
+import 'package:obd_vision/features/diagnostics/domain/usecases/get_connection_status_usecase.dart';
 import 'dashboard_state.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {

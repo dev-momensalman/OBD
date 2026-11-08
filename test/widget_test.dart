@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:your_flutter_app/core/theme/app_theme.dart';
-import 'package:your_flutter_app/data/datasources/mock_obd_datasource.dart';
-import 'package:your_flutter_app/injection_container.dart' as di;
-import 'package:your_flutter_app/presentation/bloc/dashboard_cubit.dart';
-import 'package:your_flutter_app/presentation/pages/home_cockpit_page.dart';
+import 'package:obd_vision/core/theme/app_theme.dart';
+import 'package:obd_vision/features/diagnostics/data/datasources/mock_obd_datasource.dart';
+import 'package:obd_vision/injection_container.dart' as di;
+import 'package:obd_vision/features/diagnostics/presentation/bloc/dashboard_cubit.dart';
+import 'package:obd_vision/features/diagnostics/presentation/pages/home_cockpit_page.dart';
 
 void main() {
   setUp(() async {

@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
+import 'features/diagnostics/presentation/bloc/dashboard_cubit.dart';
+import 'features/diagnostics/presentation/pages/home_cockpit_page.dart';
+import 'features/onboarding/presentation/pages/onboarding_page.dart';
+import 'features/splash/presentation/pages/splash_page.dart';
 import 'injection_container.dart' as di;
-import 'presentation/bloc/dashboard_cubit.dart';
-import 'presentation/pages/home_cockpit_page.dart';
-import 'presentation/pages/splash_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.initDependencies();
-  runApp(const ObdDiagnosticApp());
+  runApp(const ObdVisionApp());
 }
 
-class ObdDiagnosticApp extends StatelessWidget {
-  const ObdDiagnosticApp({super.key});
+class ObdVisionApp extends StatelessWidget {
+  const ObdVisionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,26 +23,29 @@ class ObdDiagnosticApp extends StatelessWidget {
       title: 'OBD Vision',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: Builder(
-        builder: (context) {
-          return SplashPage(
-            onAnimationComplete: () {
-              Navigator.of(context).pushReplacement(
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => BlocProvider(
-                    create: (_) => di.sl<DashboardCubit>(),
-                    child: const HomeCockpitPage(),
-                  ),
-                  transitionsBuilder: (_, animation, __, child) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  transitionDuration: const Duration(milliseconds: 600),
-                ),
-              );
-            },
+      initialRoute: AppRoutes.splash,
+      routes: {
+        AppRoutes.splash: (_) => SplashPage(
+              onAnimationComplete: () {},
+            ),
+        AppRoutes.onboarding: (_) => const OnboardingPage(),
+        AppRoutes.home: (_) => BlocProvider(
+              create: (_) => di.sl<DashboardCubit>(),
+              child: const HomeCockpitPage(),
+            ),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == AppRoutes.splash) {
+          return MaterialPageRoute(
+            builder: (context) => SplashPage(
+              onAnimationComplete: () {
+                Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
+              },
+            ),
           );
-        },
-      ),
+        }
+        return null;
+      },
     );
   }
 }

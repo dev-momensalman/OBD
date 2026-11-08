@@ -1,13 +1,13 @@
 import 'dart:async';
-import '../../core/errors/failures.dart';
-import '../../core/utils/result.dart';
-import '../../domain/entities/telemetry_snapshot.dart';
-import '../../domain/entities/dtc_fault.dart';
-import '../../domain/entities/diagnostic_report.dart';
-import '../../domain/entities/measured_evidence.dart';
-import '../../domain/entities/connection_status.dart';
-import '../../domain/repositories/i_obd_repository.dart';
-import '../../domain/services/rule_engine.dart';
+import 'package:obd_vision/core/errors/failures.dart';
+import 'package:obd_vision/core/utils/result.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/telemetry_snapshot.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/dtc_fault.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/diagnostic_report.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/measured_evidence.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/connection_status.dart';
+import 'package:obd_vision/features/diagnostics/domain/repositories/i_obd_repository.dart';
+import 'package:obd_vision/features/diagnostics/domain/services/rule_engine.dart';
 import '../datasources/mock_obd_datasource.dart';
 
 class ObdRepositoryImpl implements IObdRepository {

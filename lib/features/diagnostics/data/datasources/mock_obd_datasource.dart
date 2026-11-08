@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
-import '../../domain/entities/telemetry_snapshot.dart';
-import '../../domain/entities/dtc_fault.dart';
-import '../../domain/entities/connection_status.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/telemetry_snapshot.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/dtc_fault.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/connection_status.dart';
 
 class MockObdDataSource {
   final _random = Random();

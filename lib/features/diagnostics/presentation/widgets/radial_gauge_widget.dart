@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:obd_vision/core/constants/app_colors.dart';
 
 class RadialGaugeWidget extends StatelessWidget {
   final double value;
