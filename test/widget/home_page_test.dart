@@ -120,7 +120,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ProfilePage), findsOneWidget);
-    expect(find.text('youssefgad_26'), findsOneWidget);
+    expect(find.text('momen salman'), findsOneWidget);
     expect(find.text('Profile'), findsWidgets);
   });
 }

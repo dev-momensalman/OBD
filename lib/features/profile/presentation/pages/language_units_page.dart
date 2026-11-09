@@ -212,7 +212,8 @@ class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
                   const SizedBox(height: 36),
 
                   // Live Reassurance Note (Figma Node 336:3970)
-                  Center(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -222,12 +223,15 @@ class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
                           color: Color(0xFF003FB8),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          'Changes apply automatically across all connected vehicles',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF424753),
+                        Flexible(
+                          child: Text(
+                            'Changes apply automatically across all connected vehicles',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF424753),
+                            ),
                           ),
                         ),
                       ],

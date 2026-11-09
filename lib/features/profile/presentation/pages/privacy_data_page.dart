@@ -151,12 +151,14 @@ class PrivacyDataPage extends StatelessWidget {
                           color: Color(0xFF1FC16B),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          'End-to-end encrypted · GDPR ready',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1FC16B),
+                        Flexible(
+                          child: Text(
+                            'End-to-end encrypted · GDPR ready',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1FC16B),
+                            ),
                           ),
                         ),
                       ],

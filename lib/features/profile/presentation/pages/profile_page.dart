@@ -178,7 +178,7 @@ class _ProfileView extends StatelessWidget {
   Widget _buildProfileHeader(BuildContext context, UserProfileEntity? profile,
       {bool isLoading = false}) {
     final username =
-        profile?.username ?? (isLoading ? 'Loading...' : 'youssefgad_26');
+        profile?.username ?? (isLoading ? 'Loading...' : 'momen salman');
 
     return Container(
       width: double.infinity,

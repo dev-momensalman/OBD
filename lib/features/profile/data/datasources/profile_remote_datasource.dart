@@ -7,10 +7,10 @@ abstract class IProfileRemoteDataSource {
 
 class MockProfileRemoteDataSource implements IProfileRemoteDataSource {
   UserProfileModel _profile = const UserProfileModel(
-    id: 'usr_yg_26',
-    username: 'youssefgad_26',
-    email: 'youssef.gad@driver.com',
-    displayName: 'Youssef Gad',
+    id: 'usr_ms_26',
+    username: 'momen salman',
+    email: 'momensalman.dev@gmail.com',
+    displayName: 'momen salman',
     vehicleName: 'Corolla 2018',
     deviceSerial: 'OBD-II v2.4 (CPH2325)',
     preferredLanguage: 'English',

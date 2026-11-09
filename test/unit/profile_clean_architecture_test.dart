@@ -33,7 +33,7 @@ void main() {
       final Success<UserProfileEntity, Failure> successResult =
           result as Success<UserProfileEntity, Failure>;
       final profile = successResult.data;
-      expect(profile.username, equals('youssefgad_26'));
+      expect(profile.username, equals('momen salman'));
       expect(profile.vehicleName, equals('Corolla 2018'));
       expect(profile.deviceSerial, contains('CPH2325'));
     });
@@ -43,7 +43,7 @@ void main() {
 
       expect(cubit.state, isA<ProfileLoaded>());
       final loaded = cubit.state as ProfileLoaded;
-      expect(loaded.profile.displayName, equals('Youssef Gad'));
+      expect(loaded.profile.displayName, equals('momen salman'));
     });
   });
 }

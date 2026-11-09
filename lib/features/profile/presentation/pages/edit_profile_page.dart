@@ -12,10 +12,10 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final _firstNameController = TextEditingController(text: 'Youssef');
-  final _lastNameController = TextEditingController(text: 'Gad');
+  final _firstNameController = TextEditingController(text: 'momen');
+  final _lastNameController = TextEditingController(text: 'salman');
   final _phoneController = TextEditingController(text: '1098765432');
-  final _emailController = TextEditingController(text: 'youssefgad_26@gmail.com');
+  final _emailController = TextEditingController(text: 'momensalman.dev@gmail.com');
   String _selectedGender = 'Male';
   DateTime? _selectedBirthday = DateTime(2001, 5, 26);
 
