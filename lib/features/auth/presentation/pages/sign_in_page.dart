@@ -169,8 +169,14 @@ class _SignInPageState extends State<SignInPage> {
                                 _isAgreedToTerms = val;
                               });
                             },
-                            onUserAgreementTap: () {},
-                            onPrivacyPolicyTap: () {},
+                            onUserAgreementTap: () {
+                              Navigator.of(context)
+                                  .pushNamed(AppRoutes.privacyData);
+                            },
+                            onPrivacyPolicyTap: () {
+                              Navigator.of(context)
+                                  .pushNamed(AppRoutes.privacyData);
+                            },
                           ),
                           const SizedBox(height: 24),
 

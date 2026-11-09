@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obd_vision/core/constants/app_router.dart';
 import 'package:obd_vision/core/constants/app_routes.dart';
-import 'package:obd_vision/features/home/presentation/pages/home_page.dart';
+import 'package:obd_vision/features/diagnostics/presentation/pages/diagnosis_page.dart';
 import 'package:obd_vision/features/home/presentation/widgets/active_workshop_card.dart';
 import 'package:obd_vision/features/home/presentation/widgets/curved_bottom_nav_bar.dart';
 import 'package:obd_vision/features/home/presentation/widgets/home_header.dart';
 import 'package:obd_vision/features/home/presentation/widgets/live_telemetry_section.dart';
 import 'package:obd_vision/features/home/presentation/widgets/system_health_card.dart';
+import 'package:obd_vision/features/profile/presentation/pages/profile_page.dart';
+import 'package:obd_vision/features/workshops/presentation/pages/service_centers_page.dart';
 
 void main() {
   testWidgets('HomePage renders all Figma Home sections correctly', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: const HomePage(),
-        routes: {
-          AppRoutes.scan: (context) => const Scaffold(
-                body: Text('Scan Screen'),
-              ),
-        },
+        initialRoute: AppRoutes.home,
+        routes: AppRouter.routes,
       ),
     );
     await tester.pumpAndSettle();
@@ -55,10 +54,11 @@ void main() {
     expect(find.textContaining('Al-Nour Service Center'), findsOneWidget);
   });
 
-  testWidgets('Tapping Run diagnosis triggers diagnosis feedback', (tester) async {
+  testWidgets('Tapping Run diagnosis smoothly switches to DiagnosisPage tab', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: HomePage(),
+      MaterialApp(
+        initialRoute: AppRoutes.home,
+        routes: AppRouter.routes,
       ),
     );
     await tester.pumpAndSettle();
@@ -69,26 +69,43 @@ void main() {
     await tester.tap(runDiagnosisButton);
     await tester.pumpAndSettle();
 
-    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.byType(DiagnosisPage), findsOneWidget);
+    expect(find.text('Check before you scan'), findsOneWidget);
+    expect(find.text('Start scan'), findsOneWidget);
+    expect(find.text('Watch live data only'), findsOneWidget);
   });
 
-  testWidgets('CurvedBottomNavBar taps update selected index', (tester) async {
+  testWidgets('CurvedBottomNavBar switches between authentic Figma screens', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: const HomePage(),
-        routes: {
-          AppRoutes.scan: (context) => const Scaffold(
-                body: Text('Scan Screen'),
-              ),
-        },
+        initialRoute: AppRoutes.home,
+        routes: AppRouter.routes,
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Home'), findsOneWidget);
-
-    // Tapping bottom nav triggers callback without error
     final bottomNav = find.byType(CurvedBottomNavBar);
     expect(bottomNav, findsOneWidget);
+
+    // Tap Service Centers tab (Wrench icon)
+    final serviceIconFinder = find.byIcon(Icons.build_outlined);
+    expect(serviceIconFinder, findsOneWidget);
+    await tester.tap(serviceIconFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ServiceCentersPage), findsOneWidget);
+    expect(find.text('Service Centers'), findsOneWidget);
+    expect(find.text('Service'), findsOneWidget); // active bottom nav label
+
+    // Tap Profile tab (Person icon)
+    final profileIconFinder = find.byIcon(Icons.person_outline_rounded);
+    expect(profileIconFinder, findsOneWidget);
+    await tester.tap(profileIconFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProfilePage), findsOneWidget);
+    expect(find.text('youssefgad_26'), findsOneWidget);
+    expect(find.text('Profile'), findsWidgets);
   });
 }
