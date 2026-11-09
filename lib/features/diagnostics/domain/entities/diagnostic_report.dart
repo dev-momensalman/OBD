@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'dtc_fault.dart';
 import 'measured_evidence.dart';
+import 'ranked_cause.dart';
 
 class DiagnosticReport extends Equatable {
   final String id;
@@ -10,7 +11,7 @@ class DiagnosticReport extends Equatable {
   final DtcSeverity overallSeverity;
   final int vehicleHealthScore;
   final String plainLanguageExplanation;
-  final List<Map<String, dynamic>> rankedCauses;
+  final List<RankedCause> rankedCauses;
   final String recommendedNextAction;
   final double confidenceScore;
   final double minCostUsd;

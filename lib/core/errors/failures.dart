@@ -26,6 +26,10 @@ class InsufficientEvidenceFailure extends Failure {
   const InsufficientEvidenceFailure(super.message, {super.code});
 }
 
+class AuthFailure extends Failure {
+  const AuthFailure(super.message, {super.code});
+}
+
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message, {super.code});
 }

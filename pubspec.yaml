@@ -67,6 +67,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/icons/home/
     - assets/sounds/
     - assets/1109.MP3
 

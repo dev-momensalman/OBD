@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obd_vision/features/diagnostics/data/datasources/mock_obd_datasource.dart';
 import 'package:obd_vision/features/diagnostics/data/repositories/obd_repository_impl.dart';
-import 'package:obd_vision/features/diagnostics/domain/services/rule_engine.dart';
 
 void main() {
-  group('ObdRepositoryImpl with EGM Hardened Error Handling', () {
+  group('ObdRepositoryImpl with Clean Architecture Responsibility', () {
     late MockObdDataSource mockDataSource;
     late ObdRepositoryImpl repository;
 
@@ -12,7 +11,6 @@ void main() {
       mockDataSource = MockObdDataSource();
       repository = ObdRepositoryImpl(
         mockDataSource: mockDataSource,
-        ruleEngine: const RuleEngine(),
       );
     });
 
@@ -20,22 +18,30 @@ void main() {
       mockDataSource.dispose();
     });
 
-    test('runComprehensiveAiDiagnosis returns Success with report', () async {
-      final result = await repository.runComprehensiveAiDiagnosis();
+    test('scanActiveFaultCodes returns Success with simulated DTC entities', () async {
+      final result = await repository.scanActiveFaultCodes();
       expect(result.isSuccess, isTrue);
-      final report = result.dataOrNull;
-      expect(report, isNotNull);
-      expect(report!.dtcs.length, 2);
-      expect(report.measuredEvidence.detectedDtcs, contains('P0301'));
-      expect(report.safetyDisclaimer.isNotEmpty, isTrue);
+      final dtcs = result.dataOrNull;
+      expect(dtcs, isNotNull);
+      expect(dtcs!.length, 2);
+      expect(dtcs.first.code, 'P0301');
     });
 
-    test('runComprehensiveAiDiagnosis returns Err on hardware/timeout error', () async {
+    test('scanActiveFaultCodes returns Err on hardware/timeout error', () async {
       mockDataSource.setShouldFailNextScan(true);
 
-      final result = await repository.runComprehensiveAiDiagnosis();
+      final result = await repository.scanActiveFaultCodes();
       expect(result.isError, isTrue);
       expect(result.errorOrNull?.message, contains('BUS BUSY'));
+    });
+
+    test('getMeasuredEvidence returns sensor telemetry evidence snapshot', () async {
+      final result = await repository.getMeasuredEvidence(['P0301']);
+      expect(result.isSuccess, isTrue);
+      final evidence = result.dataOrNull;
+      expect(evidence, isNotNull);
+      expect(evidence!.coolantTempC, 94.0);
+      expect(evidence.batteryVoltage, 14.1);
     });
   });
 }

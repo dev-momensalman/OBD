@@ -3,26 +3,21 @@ import 'package:obd_vision/core/errors/failures.dart';
 import 'package:obd_vision/core/utils/result.dart';
 import 'package:obd_vision/features/diagnostics/domain/entities/telemetry_snapshot.dart';
 import 'package:obd_vision/features/diagnostics/domain/entities/dtc_fault.dart';
-import 'package:obd_vision/features/diagnostics/domain/entities/diagnostic_report.dart';
 import 'package:obd_vision/features/diagnostics/domain/entities/measured_evidence.dart';
 import 'package:obd_vision/features/diagnostics/domain/entities/connection_status.dart';
 import 'package:obd_vision/features/diagnostics/domain/repositories/i_obd_repository.dart';
-import 'package:obd_vision/features/diagnostics/domain/services/rule_engine.dart';
 import '../datasources/mock_obd_datasource.dart';
 
 class ObdRepositoryImpl implements IObdRepository {
   final MockObdDataSource _mockDataSource;
-  final RuleEngine _ruleEngine;
 
   ObdRepositoryImpl({
     required MockObdDataSource mockDataSource,
-    RuleEngine ruleEngine = const RuleEngine(),
-  })  : _mockDataSource = mockDataSource,
-        _ruleEngine = ruleEngine;
+  }) : _mockDataSource = mockDataSource;
 
   @override
   Stream<TelemetrySnapshot> streamLiveTelemetry() {
-    return _mockDataSource.telemetryStream;
+    return _mockDataSource.telemetryStream.map((model) => model.toEntity());
   }
 
   @override
@@ -32,71 +27,22 @@ class ObdRepositoryImpl implements IObdRepository {
   @override
   Future<Result<List<DtcFault>, Failure>> scanActiveFaultCodes() async {
     try {
-      final dtcs = await _mockDataSource.fetchSimulatedDtcs();
-      return Success(dtcs);
+      final models = await _mockDataSource.fetchSimulatedDtcs();
+      final entities = models.map((m) => m.toEntity()).toList();
+      return Success(entities);
     } catch (e) {
-      return Err(ObdProtocolFailure(e.toString()));
+      return Err(ObdProtocolFailure('Failed to scan active fault codes: $e'));
     }
   }
 
   @override
-  Future<Result<DiagnosticReport, Failure>> runComprehensiveAiDiagnosis() async {
+  Future<Result<MeasuredEvidence, Failure>> getMeasuredEvidence(
+      List<String> detectedDtcs) async {
     try {
-      final dtcs = await _mockDataSource.fetchSimulatedDtcs();
-
-      // Synthesize physical measured evidence snapshot
-      final measuredEvidence = MeasuredEvidence(
-        detectedDtcs: dtcs.map((d) => d.code).toList(),
-        coolantTempC: 94.0,
-        batteryVoltage: 14.1,
-        engineRpm: 2150.0,
-        vehicleSpeedKmH: 68.0,
-        engineLoadPercent: 58.5,
-        shortTermFuelTrimPercent: 7.8,
-        longTermFuelTrimPercent: 14.2,
-        measuredAt: DateTime.now(),
-      );
-
-      // Tier 1: Evaluate Deterministic Safety Rule Engine
-      final ruleViolations = _ruleEngine.evaluate(measuredEvidence);
-
-      // Calculate severity taking rule violations into account
-      final hasCriticalRule =
-          ruleViolations.any((v) => v.severity == DtcSeverity.critical);
-      final hasWarningRule =
-          ruleViolations.any((v) => v.severity == DtcSeverity.warning);
-
-      final overallSeverity = hasCriticalRule
-          ? DtcSeverity.critical
-          : (hasWarningRule || dtcs.isNotEmpty)
-              ? DtcSeverity.warning
-              : DtcSeverity.healthy;
-
-      final report = DiagnosticReport(
-        id: 'rpt_${DateTime.now().millisecondsSinceEpoch}',
-        timestamp: DateTime.now(),
-        dtcs: dtcs,
-        measuredEvidence: measuredEvidence,
-        overallSeverity: overallSeverity,
-        vehicleHealthScore: hasCriticalRule ? 45 : (dtcs.isNotEmpty ? 76 : 98),
-        plainLanguageExplanation:
-            'Combustion irregularity detected in Cylinder 1 accompanied by positive fuel trims. '
-            'Vehicle remains drivable at moderate speeds, but rapid inspection is advised.',
-        rankedCauses: const [
-          {'cause': 'Ignition Coil Failure (Cylinder 1)', 'probabilityPercent': 65},
-          {'cause': 'Fouled or Worn Spark Plug', 'probabilityPercent': 25},
-          {'cause': 'Clogged Fuel Injector Nozzle', 'probabilityPercent': 10},
-        ],
-        recommendedNextAction:
-            'Swap Cylinder 1 ignition coil with Cylinder 2 and verify if DTC moves to P0302.',
-        confidenceScore: 0.89,
-        minCostUsd: 85.0,
-        maxCostUsd: 165.0,
-      );
-
-      return Success(report);
+      final model = await _mockDataSource.fetchMeasuredEvidence(detectedDtcs);
+      return Success(model.toEntity());
     } catch (e) {
-      return Err(ObdProtocolFailure('Failed to complete diagnostic scan: $e'));
+      return Err(ObdProtocolFailure('Failed to fetch measured evidence: $e'));
     }
   }
 

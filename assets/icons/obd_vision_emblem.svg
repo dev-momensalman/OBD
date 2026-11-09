@@ -1,0 +1,77 @@
+<svg width="527" height="527" viewBox="0 0 527 527" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Car -->
+  <g transform="translate(93.17, 95.02)">
+    <g id="Car">
+<path id="Vector" d="M1.58 58.685C1.58 58.685 4.80999 35.795 29.79 30.855C29.79 30.855 19.88 25.495 5.14999 22.005L0 14.555H48.47L52.3 20.125C52.3 20.125 160.1 -23.715 239.39 18.015C239.39 18.015 322.31 7.40499 338.84 60.385H335.54C335.54 60.385 322.86 13.405 220.13 24.745C220.13 24.745 216.43 29.335 207.01 27.735C207.01 27.735 199.54 25.115 200.72 18.635C202.15 17.575 203.39 17.185 204.19 17.015C208.49 16.105 213.14 18.775 218.96 21.015C219.12 21.075 219.45 21.205 219.91 21.315C221.37 21.665 222.65 21.505 223.52 21.315C223.52 21.315 225.53 20.935 225.69 19.785C225.69 19.785 175.37 -7.83498 96.43 22.045L102.03 27.765L257.66 30.195C257.66 30.195 240 34.665 232.19 49.635C232.19 49.635 231.15 47.805 235.13 39.505H122.66C122.66 39.505 95.33 24.985 54.81 31.355C54.81 31.355 75.62 35.075 84.3 60.395H69.41C69.41 60.395 43.2 12.185 1.58 58.695V58.685Z" fill="#114AA6"/>
+<path id="Vector_2" d="M95.79 60.385C95.79 60.385 91.36 47.065 77.79 36.215C77.79 36.215 97.6 36.575 105.97 53.015L228.07 60.385H95.79Z" fill="#06335F"/>
+<path id="Vector_3" d="M317.23 58.085H307.2C299.58 47.235 286.97 40.145 272.7 40.145C258.43 40.145 246.26 46.9851 238.61 57.5051C245.32 42.5551 260.34 32.145 277.79 32.145C295.24 32.145 310.64 42.825 317.23 58.085Z" fill="#06335F"/>
+</g>
+  </g>
+  <!-- Sides -->
+  <g transform="translate(99.55, 179.13)">
+    <g id="sides">
+<path id="Vector" d="M7.29164 1.76826L24.9516 75.1182" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+<path id="Vector_2" d="M333.502 1.78821L315.462 75.2683" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+</g>
+  </g>
+  <!-- Carve -->
+  <g transform="translate(117.15, 250.69)">
+    <g id="Carve">
+<path id="Vector" d="M7.31711 1.64618L7.40711 2.04621C7.47711 2.37621 7.55711 2.71621 7.64711 3.04621C10.4771 13.7262 20.2171 21.5962 31.7971 21.5962H90.1071" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+<path id="Vector_2" d="M298.717 1.63617C298.597 2.23617 298.457 2.81617 298.287 3.38617L298.247 3.55622C295.237 13.9762 285.627 21.5962 274.237 21.5962H216.377" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+</g>
+  </g>
+  <!-- Rec Bottom -->
+  <g transform="translate(191.93, 263.13)">
+    <g id="Rec Bottom">
+<path id="Vector" d="M0.0100098 23.59H141.31" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+<path id="Vector_2" d="M133.78 23.32V0" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+<path id="Vector_3" d="M7.5 23.32V0.0200195" stroke-width="15" stroke-miterlimit="10" stroke="black"/>
+</g>
+  </g>
+  <!-- Dot -->
+  <g transform="translate(142.39, 173.28)">
+    <g id="Dot">
+<g id="Bottom Dots">
+<path id="Vector" opacity="0.98" d="M24.3 71.21H6.95999" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="#114AA6"/>
+<path id="Vector_2" opacity="0.98" d="M68.9 71.21H51.56" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="#114AA6"/>
+<path id="Vector_3" opacity="0.98" d="M113.15 71.21H95.81" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="#114AA6"/>
+<path id="Vector_4" opacity="0.98" d="M157.07 71.21H139.73" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="#114AA6"/>
+<path id="Vector_5" opacity="0.98" d="M201.33 71.21H183.98" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="#114AA6"/>
+<path id="Vector_6" opacity="0.98" d="M246.94 71.21H229.6" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="#114AA6"/>
+</g>
+<path id="Dot_2" opacity="0.96" d="M14.55 25.93H14.28" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<g id="T">
+<path id="Vector_7" opacity="0.98" d="M246.94 6.52002H229.6" stroke-width="12" stroke-miterlimit="10" stroke-linecap="round" stroke="black"/>
+<path id="Vector_8" opacity="0.98" d="M238.27 40.57V6.52002" stroke-width="11" stroke-miterlimit="10" stroke-linecap="round" stroke="black"/>
+</g>
+<g id="up Dots">
+<path id="Vector_9" opacity="0.96" d="M5.76999 5.5H5.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_10" opacity="0.96" d="M23.77 5.5H23.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_11" opacity="0.96" d="M50.77 5.5H50.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_12" opacity="0.96" d="M68.77 5.5H68.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_13" opacity="0.96" d="M94.77 5.5H94.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_14" opacity="0.96" d="M112.77 5.5H112.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_15" opacity="0.96" d="M139.77 5.5H139.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_16" opacity="0.96" d="M157.77 5.5H157.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_17" opacity="0.96" d="M183.77 5.5H183.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+<path id="Vector_18" opacity="0.96" d="M201.77 5.5H201.5" stroke-width="11" stroke-miterlimit="10" stroke-linecap="square" stroke="black"/>
+</g>
+</g>
+  </g>
+  <!-- Heart Beat -->
+  <g transform="translate(176.81, 179.39)">
+    <g id="Heart Beat">
+<path id="Vector" d="M126.93 2.00029L132.8 50.3403" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_2" d="M154.27 32.1603H213.51" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_3" d="M137.8 32.1603H143.14" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_4" d="M2 32.1603H109.76" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_5" d="M113.85 23.5703L121.38 37.4903" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_6" d="M148.12 23.7003L154.27 32.1603" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_7" d="M126.93 2.00029L121.38 37.4903" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_8" d="M137.8 32.1603L132.8 50.3403" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_9" d="M148.12 23.7003L143.14 32.1603" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+<path id="Vector_10" d="M113.85 23.5703L109.76 32.1603" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round" stroke="#810D0D"/>
+</g>
+  </g>
+</svg>
