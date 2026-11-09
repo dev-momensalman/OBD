@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../injection_container.dart' as di;
+import '../../domain/entities/user_profile_entity.dart';
+import '../bloc/profile_cubit.dart';
+import '../bloc/profile_state.dart';
 
 /// Authentic Profile Page matching Figma Node 325:1927
+/// Connected via Clean Architecture (Cubit -> UseCase -> Repository -> DataSource)
 class ProfilePage extends StatelessWidget {
   final VoidCallback? onBack;
 
@@ -10,131 +16,170 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => di.sl<ProfileCubit>()..fetchProfile(),
+      child: _ProfileView(onBack: onBack),
+    );
+  }
+}
+
+class _ProfileView extends StatelessWidget {
+  final VoidCallback? onBack;
+
+  const _ProfileView({this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            // 1. Rich Curved Dark Blue Profile Header (Figma Node 325:1927)
-            _buildProfileHeader(context),
+      body: BlocBuilder<ProfileCubit, ProfileState>(
+        builder: (context, state) {
+          UserProfileEntity? profile;
+          if (state is ProfileLoaded) {
+            profile = state.profile;
+          }
 
-            // 2. Profile Options List (Figma Node 325:1929)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildMenuItem(
-                    icon: Icons.directions_car_rounded,
-                    title: 'My vehicle',
-                    onTap: () => Navigator.of(context).pushNamed(AppRoutes.myVehicle),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  _buildMenuItem(
-                    icon: Icons.developer_board_rounded,
-                    title: 'My device',
-                    onTap: () => Navigator.of(context).pushNamed(AppRoutes.myDevice),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  _buildMenuItem(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    onTap: () => Navigator.of(context).pushNamed(AppRoutes.notifications),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  _buildMenuItem(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help & Support',
-                    onTap: () => Navigator.of(context).pushNamed(AppRoutes.helpSupport),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  _buildMenuItem(
-                    icon: Icons.privacy_tip_outlined,
-                    title: 'Privacy & data',
-                    onTap: () => Navigator.of(context).pushNamed(AppRoutes.privacyData),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // 1. Rich Curved Dark Blue Profile Header (Figma Node 325:1927)
+                _buildProfileHeader(context, profile,
+                    isLoading: state is ProfileLoading),
 
-            // 3. Settings Section Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Setting',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                // 2. Profile Options List (Figma Node 325:1929)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildMenuItem(
+                        icon: Icons.directions_car_rounded,
+                        title: 'My vehicle',
+                        subtitle: profile?.vehicleName,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.myVehicle),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      _buildMenuItem(
+                        icon: Icons.developer_board_rounded,
+                        title: 'My device',
+                        subtitle: profile?.deviceSerial,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.myDevice),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      _buildMenuItem(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notifications',
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.notifications),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      _buildMenuItem(
+                        icon: Icons.help_outline_rounded,
+                        title: 'Help & Support',
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.helpSupport),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      _buildMenuItem(
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Privacy & data',
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.privacyData),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
+                const SizedBox(height: 20),
 
-            // 4. Settings Card (Language & Log out)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                // 3. Settings Section Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Setting',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildMenuItem(
-                    icon: Icons.language_rounded,
-                    title: 'Language & units',
-                    onTap: () => Navigator.of(context).pushNamed(AppRoutes.languageUnits),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  _buildMenuItem(
-                    icon: Icons.logout_rounded,
-                    title: 'Log out',
-                    isDestructive: true,
-                    onTap: () {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        AppRoutes.signIn,
-                        (route) => false,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
+                ),
+                const SizedBox(height: 8),
 
-            const SizedBox(height: 120),
-          ],
-        ),
+                // 4. Settings Card (Language & Log out)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildMenuItem(
+                        icon: Icons.language_rounded,
+                        title: 'Language & units',
+                        subtitle: profile?.preferredLanguage,
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.languageUnits),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      _buildMenuItem(
+                        icon: Icons.logout_rounded,
+                        title: 'Log out',
+                        isDestructive: true,
+                        onTap: () {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            AppRoutes.signIn,
+                            (route) => false,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 120),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
+  Widget _buildProfileHeader(BuildContext context, UserProfileEntity? profile,
+      {bool isLoading = false}) {
+    final username =
+        profile?.username ?? (isLoading ? 'Loading...' : 'youssefgad_26');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 50, bottom: 28, left: 20, right: 20),
@@ -215,7 +260,7 @@ class ProfilePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'youssefgad_26',
+                      username,
                       style: GoogleFonts.inter(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -267,10 +312,12 @@ class ProfilePage extends StatelessWidget {
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    final color = isDestructive ? const Color(0xFFDC2626) : const Color(0xFF0F172A);
+    final color =
+        isDestructive ? const Color(0xFFDC2626) : const Color(0xFF0F172A);
 
     return InkWell(
       onTap: onTap,
@@ -281,19 +328,36 @@ class ProfilePage extends StatelessWidget {
             Icon(icon, size: 22, color: color),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                  if (subtitle != null && subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: isDestructive ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
+              color: isDestructive
+                  ? const Color(0xFFDC2626)
+                  : const Color(0xFF94A3B8),
             ),
           ],
         ),

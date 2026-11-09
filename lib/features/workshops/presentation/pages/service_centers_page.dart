@@ -1,72 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../injection_container.dart' as di;
+import '../../domain/entities/service_center_entity.dart';
+import '../bloc/workshops_cubit.dart';
+import '../bloc/workshops_state.dart';
 
 /// Authentic Service Centers & Workshops Page matching Figma Node 398:3074
-class ServiceCentersPage extends StatefulWidget {
+/// Connected via Clean Architecture (Cubit -> UseCase -> Repository -> DataSource)
+class ServiceCentersPage extends StatelessWidget {
   final VoidCallback? onBack;
 
   const ServiceCentersPage({super.key, this.onBack});
 
   @override
-  State<ServiceCentersPage> createState() => _ServiceCentersPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => di.sl<WorkshopsCubit>()..fetchServiceCenters(),
+      child: _ServiceCentersView(onBack: onBack),
+    );
+  }
 }
 
-class _ServiceCentersPageState extends State<ServiceCentersPage> {
+class _ServiceCentersView extends StatefulWidget {
+  final VoidCallback? onBack;
+
+  const _ServiceCentersView({this.onBack});
+
+  @override
+  State<_ServiceCentersView> createState() => _ServiceCentersViewState();
+}
+
+class _ServiceCentersViewState extends State<_ServiceCentersView> {
   int _selectedViewTab = 0; // 0: List, 1: Map
-  String _searchQuery = '';
+  final _searchController = TextEditingController();
 
-  List<Map<String, dynamic>> get _filteredCenters {
-    if (_searchQuery.trim().isEmpty) return _centers;
-    return _centers
-        .where((c) => (c['name'] as String)
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
-        .toList();
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
-
-  final List<Map<String, dynamic>> _centers = [
-    {
-      'name': 'Al-Nour Service Center',
-      'distance': '1.2 km',
-      'rating': '4.7',
-      'reviews': '230',
-      'status': 'Open until 8 PM',
-      'isOpen': true,
-      'tags': ['Engine', 'Electrical', 'Compatible'],
-      'icon': Icons.precision_manufacturing_rounded,
-    },
-    {
-      'name': 'Speed Auto Care',
-      'distance': '2.8 km',
-      'rating': '4.5',
-      'reviews': '118',
-      'status': 'Open until 6 PM',
-      'isOpen': true,
-      'tags': ['Brakes', 'AC', 'Compatible'],
-      'icon': Icons.car_repair_rounded,
-    },
-    {
-      'name': 'Delta Garage',
-      'distance': '4.1 km',
-      'rating': '4.2',
-      'reviews': '64',
-      'status': 'Closed, opens 9 AM',
-      'isOpen': false,
-      'tags': ['Engine', 'Tires', 'Compatible'],
-      'icon': Icons.garage_rounded,
-    },
-    {
-      'name': 'Precision Tune Auto Care',
-      'distance': '3.5 km',
-      'rating': '4.6',
-      'reviews': '95',
-      'status': 'Open until 7 PM',
-      'isOpen': true,
-      'tags': ['Transmission', 'Suspension', 'Compatible'],
-      'icon': Icons.handyman_rounded,
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -254,10 +228,9 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextField(
+                              controller: _searchController,
                               onChanged: (val) {
-                                setState(() {
-                                  _searchQuery = val;
-                                });
+                                context.read<WorkshopsCubit>().filterCenters(val);
                               },
                               decoration: InputDecoration(
                                 hintText: 'Search by name or area',
@@ -408,38 +381,75 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
               ),
               const SizedBox(height: 16),
 
-              // 5. Results Subheader: "5 centers near you" + "Nearest first v"
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${_centers.length} centers near you',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        'Nearest first',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF003FB8),
+              // 5. Reactive Clean Architecture BlocBuilder
+              BlocBuilder<WorkshopsCubit, WorkshopsState>(
+                builder: (context, state) {
+                  if (state is WorkshopsLoading) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Color(0xFF003FB8)),
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded,
-                          size: 16, color: Color(0xFF003FB8)),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+                    );
+                  } else if (state is WorkshopsError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Text(
+                          state.message,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: const Color(0xFFDC2626),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (state is WorkshopsLoaded) {
+                    final centers = state.centers;
 
-              // 6. List of Workshop Cards (Figma Nodes 404:3430+)
-              ..._filteredCenters.map((center) => _buildCenterCard(center)),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Subheader
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${centers.length} centers near you',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Nearest first',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF003FB8),
+                                  ),
+                                ),
+                                const Icon(Icons.keyboard_arrow_down_rounded,
+                                    size: 16, color: Color(0xFF003FB8)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // List of Workshop Cards from Entity
+                        ...centers.map((center) => _buildCenterCard(center)),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
 
               // Space for bottom nav bar
               const SizedBox(height: 120),
@@ -450,9 +460,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
     );
   }
 
-  Widget _buildCenterCard(Map<String, dynamic> center) {
-    final tags = center['tags'] as List<String>;
-
+  Widget _buildCenterCard(ServiceCenterEntity center) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -480,9 +488,9 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  center['icon'] as IconData,
-                  color: const Color(0xFF003FB8),
+                child: const Icon(
+                  Icons.precision_manufacturing_rounded,
+                  color: Color(0xFF003FB8),
                   size: 24,
                 ),
               ),
@@ -492,7 +500,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      center['name'] as String,
+                      center.name,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -500,10 +508,11 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          '${center['distance']} · ',
+                          '${center.distance} · ',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             color: const Color(0xFF64748B),
@@ -512,7 +521,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                         const Icon(Icons.star_rounded,
                             color: Color(0xFFF59E0B), size: 14),
                         Text(
-                          ' ${center['rating']} (${center['reviews']}) · ',
+                          ' ${center.rating} (${center.reviewsCount}) · ',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -520,11 +529,11 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                           ),
                         ),
                         Text(
-                          center['status'] as String,
+                          center.workingHours,
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: center['isOpen'] == true
+                            color: center.isOpen
                                 ? const Color(0xFF16A34A)
                                 : const Color(0xFFDC2626),
                           ),
@@ -543,7 +552,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
           Wrap(
             spacing: 6,
             runSpacing: 4,
-            children: tags.map((t) {
+            children: center.tags.map((t) {
               final isCompatible = t == 'Compatible';
               return Container(
                 padding:

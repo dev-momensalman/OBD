@@ -1,56 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../injection_container.dart' as di;
+import '../../domain/entities/activity_log_entity.dart';
+import '../bloc/history_cubit.dart';
+import '../bloc/history_state.dart';
 
 /// Authentic Activity & Diagnostic History Page matching Figma Node 118:74
-class ActivityHistoryPage extends StatefulWidget {
+/// Connected via Clean Architecture (Cubit -> UseCase -> Repository -> DataSource)
+class ActivityHistoryPage extends StatelessWidget {
   final VoidCallback? onBack;
 
   const ActivityHistoryPage({super.key, this.onBack});
 
   @override
-  State<ActivityHistoryPage> createState() => _ActivityHistoryPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => di.sl<HistoryCubit>()..fetchHistory(),
+      child: _ActivityHistoryView(onBack: onBack),
+    );
+  }
 }
 
-class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
+class _ActivityHistoryView extends StatefulWidget {
+  final VoidCallback? onBack;
+
+  const _ActivityHistoryView({this.onBack});
+
+  @override
+  State<_ActivityHistoryView> createState() => _ActivityHistoryViewState();
+}
+
+class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
   int _selectedFilter = 0; // 0: All, 1: Faults, 2: Routine, 3: Trips
 
   final List<String> _filters = ['All', 'Faults', 'Routine', 'Trips'];
-
-  final List<Map<String, dynamic>> _activities = [
-    {
-      'date': 'Today, 09:40',
-      'title': 'High Coolant Temp & Misfire',
-      'subtitle': 'P0301, P0171 detected · 24 sensors recorded',
-      'healthScore': 86,
-      'isWarning': true,
-      'severity': 'Warning',
-    },
-    {
-      'date': 'Yesterday, 14:15',
-      'title': 'Routine System Pre-Check',
-      'subtitle': 'All electronic control units responding',
-      'healthScore': 98,
-      'isWarning': false,
-      'severity': 'Normal',
-    },
-    {
-      'date': '3 days ago',
-      'title': 'Battery Alternator Fluctuation',
-      'subtitle': 'Voltage dipped to 12.1V under engine load',
-      'healthScore': 91,
-      'isWarning': true,
-      'severity': 'Mild',
-    },
-    {
-      'date': '1 week ago',
-      'title': 'Scheduled Full Vehicle Diagnostic',
-      'subtitle': 'Powertrain, ABS & SRS full sweep passed',
-      'healthScore': 100,
-      'isWarning': false,
-      'severity': 'Optimal',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -107,8 +92,10 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                       child: ChoiceChip(
                         label: Text(_filters[index]),
                         selected: isSelected,
-                        onSelected: (_) =>
-                            setState(() => _selectedFilter = index),
+                        onSelected: (_) {
+                          setState(() => _selectedFilter = index);
+                          context.read<HistoryCubit>().changeFilter(_filters[index]);
+                        },
                         labelStyle: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight:
@@ -134,8 +121,74 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
               ),
               const SizedBox(height: 16),
 
-              // 3. Activity Timeline List
-              ..._activities.map((act) => _buildActivityItem(context, act)),
+              // 3. Reactive Clean Architecture BlocBuilder
+              BlocBuilder<HistoryCubit, HistoryState>(
+                builder: (context, state) {
+                  if (state is HistoryLoading) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Color(0xFF003FB8)),
+                        ),
+                      ),
+                    );
+                  } else if (state is HistoryError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.error_outline_rounded,
+                                color: Color(0xFFDC2626), size: 36),
+                            const SizedBox(height: 8),
+                            Text(
+                              state.message,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: const Color(0xFFDC2626),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  context.read<HistoryCubit>().fetchHistory(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF003FB8),
+                              ),
+                              child: const Text('Retry',
+                                  style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  } else if (state is HistoryLoaded) {
+                    if (state.logs.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: Text(
+                            'No diagnostic logs found for this filter.',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: state.logs
+                          .map((log) => _buildActivityItem(context, log))
+                          .toList(),
+                    );
+                  }
+
+                  return const SizedBox.shrink();
+                },
+              ),
 
               const SizedBox(height: 120),
             ],
@@ -145,9 +198,9 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     );
   }
 
-  Widget _buildActivityItem(BuildContext context, Map<String, dynamic> act) {
-    final isWarning = act['isWarning'] as bool;
-    final score = act['healthScore'] as int;
+  Widget _buildActivityItem(BuildContext context, ActivityLogEntity act) {
+    final isWarning = act.isWarning;
+    final score = act.healthScore;
 
     return GestureDetector(
       onTap: () {
@@ -209,7 +262,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        act['date'] as String,
+                        act.date,
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -226,7 +279,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          act['severity'] as String,
+                          act.severity,
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -240,7 +293,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    act['title'] as String,
+                    act.title,
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -249,7 +302,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    act['subtitle'] as String,
+                    act.subtitle,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: const Color(0xFF64748B),

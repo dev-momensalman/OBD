@@ -10,8 +10,16 @@ import 'package:obd_vision/features/home/presentation/widgets/live_telemetry_sec
 import 'package:obd_vision/features/home/presentation/widgets/system_health_card.dart';
 import 'package:obd_vision/features/profile/presentation/pages/profile_page.dart';
 import 'package:obd_vision/features/workshops/presentation/pages/service_centers_page.dart';
+import 'package:obd_vision/injection_container.dart' as di;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    await di.initDependencies();
+  });
+
   testWidgets('HomePage renders all Figma Home sections correctly', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

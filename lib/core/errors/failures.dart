@@ -33,3 +33,7 @@ class AuthFailure extends Failure {
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message, {super.code});
 }
+
+class ServerFailure extends Failure {
+  const ServerFailure(super.message, {super.code});
+}
