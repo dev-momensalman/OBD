@@ -34,6 +34,9 @@ import 'package:obd_vision/features/history/domain/repositories/i_history_reposi
 import 'package:obd_vision/features/history/domain/usecases/get_diagnostic_history_usecase.dart';
 import 'package:obd_vision/features/history/presentation/bloc/history_cubit.dart';
 
+// Vehicle Management
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
+
 // User Profile
 import 'package:obd_vision/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:obd_vision/features/profile/data/repositories/profile_repository_impl.dart';
@@ -133,5 +136,8 @@ Future<void> initDependencies({SharedPreferences? preferences}) async {
   );
   sl.registerFactory<ProfileCubit>(
     () => ProfileCubit(sl()),
+  );
+  sl.registerFactory<VehicleCubit>(
+    () => VehicleCubit(),
   );
 }

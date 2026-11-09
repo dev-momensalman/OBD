@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_routes.dart';
 import '../../../../injection_container.dart' as di;
-import '../../domain/entities/service_center_entity.dart';
 import '../bloc/workshops_cubit.dart';
 import '../bloc/workshops_state.dart';
+import '../widgets/service_center_list_card.dart';
+import '../widgets/service_centers_header.dart';
+import '../widgets/service_centers_map_view.dart';
+import '../widgets/service_repair_tracker_card.dart';
 
 /// Authentic Service Centers & Workshops Page matching Figma Node 398:3074
 /// Connected via Clean Architecture (Cubit -> UseCase -> Repository -> DataSource)
@@ -52,78 +54,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 1. Top Curved Blue Header (matching Figma Node 404:3383)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 50, bottom: 20, left: 16, right: 16),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF003FB8), // Royal Blue
-                    Color(0xFF001C52), // Marine Navy
-                  ],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (widget.onBack != null)
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white, size: 20),
-                      onPressed: widget.onBack,
-                    )
-                  else
-                    const SizedBox(width: 40),
-                  Text(
-                    'Service Centers',
-                    style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.notifications_none_rounded,
-                              color: Color(0xFF003FB8), size: 22),
-                          onPressed: () {
-                            Navigator.of(context).pushNamed(AppRoutes.notifications);
-                          },
-                        ),
-                        Positioned(
-                          right: 10,
-                          top: 10,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFFE11D48),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ServiceCentersHeader(onBack: widget.onBack),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -133,723 +64,265 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                   const SizedBox(height: 16),
 
                   // 2. Active Repair Progress Banner (Figma Node 404:3388)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushNamed(AppRoutes.centerDetails);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFD9E2F0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF002F8A).withValues(alpha: 0.06),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                  child: Row(
+                  const ServiceRepairTrackerCard(),
+                  const SizedBox(height: 16),
+
+                  // 3. Search Bar with Filter Dialog Button (Figma Node 404:3407)
+                  Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.handyman_rounded,
-                          color: Color(0xFF003FB8),
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'Repair in progress',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1E293B),
+                        child: Container(
+                          height: 46,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.search_rounded,
+                                  color: Color(0xFF94A3B8), size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  onChanged: (val) {
+                                    context.read<WorkshopsCubit>().filterCenters(val);
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Search by name or area',
+                                    hintStyle: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: const Color(0xFF94A3B8),
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF84E8B4)
-                                        .withValues(alpha: 0.35),
-                                    borderRadius: BorderRadius.circular(100),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.tune_rounded,
+                              color: Color(0xFF003FB8), size: 20),
+                          onPressed: () {},
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 4. Segmented Control: [List] | [Map] (Figma Node 404:3420)
+                  _buildSegmentedControl(),
+                  const SizedBox(height: 16),
+
+                  // 5. Reactive Clean Architecture BlocBuilder
+                  BlocBuilder<WorkshopsCubit, WorkshopsState>(
+                    builder: (context, state) {
+                      if (state is WorkshopsLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation(Color(0xFF003FB8)),
+                            ),
+                          ),
+                        );
+                      } else if (state is WorkshopsError) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Text(
+                              state.message,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: const Color(0xFFDC2626),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (state is WorkshopsLoaded) {
+                        final centers = state.centers;
+
+                        if (_selectedViewTab == 1) {
+                          return ServiceCentersMapView(centers: centers);
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Subheader
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${centers.length} centers near you',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF64748B),
                                   ),
-                                  child: Text(
-                                    'Active',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF16A34A),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Nearest first',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF003FB8),
+                                      ),
                                     ),
-                                  ),
+                                    const Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        size: 16,
+                                        color: Color(0xFF003FB8)),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Al-Nour Service · Ready Thursday',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF64748B),
-                              ),
+                            const SizedBox(height: 12),
+
+                            // List of Workshop Cards from Entity
+                            ...centers.map(
+                              (center) => ServiceCenterListCard(center: center),
                             ),
                           ],
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Color(0xFF94A3B8)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 3. Search Bar with Filter Dialog Button (Figma Node 404:3407)
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 46,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search_rounded,
-                              color: Color(0xFF94A3B8), size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (val) {
-                                context.read<WorkshopsCubit>().filterCenters(val);
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Search by name or area',
-                                hintStyle: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: const Color(0xFF94A3B8),
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.tune_rounded,
-                          color: Color(0xFF003FB8), size: 20),
-                      onPressed: () {},
-                    ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+            ),
 
-              // 4. Segmented Control: [List] | [Map] (Figma Node 404:3420)
-              Container(
-                height: 44,
-                padding: const EdgeInsets.all(4),
+            // Space for bottom nav bar
+            const SizedBox(height: 120),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedControl() {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedViewTab = 0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2F6),
-                  borderRadius: BorderRadius.circular(12),
+                  color: _selectedViewTab == 0 ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: _selectedViewTab == 0
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
+                alignment: Alignment.center,
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedViewTab = 0),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            color: _selectedViewTab == 0
-                                ? Colors.white
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: _selectedViewTab == 0
-                                ? [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.06),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.format_list_bulleted_rounded,
-                                size: 18,
-                                color: _selectedViewTab == 0
-                                    ? const Color(0xFF003FB8)
-                                    : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'List',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: _selectedViewTab == 0
-                                      ? FontWeight.bold
-                                      : FontWeight.w500,
-                                  color: _selectedViewTab == 0
-                                      ? const Color(0xFF003FB8)
-                                      : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    Icon(
+                      Icons.format_list_bulleted_rounded,
+                      size: 18,
+                      color: _selectedViewTab == 0
+                          ? const Color(0xFF003FB8)
+                          : const Color(0xFF64748B),
                     ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedViewTab = 1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            color: _selectedViewTab == 1
-                                ? Colors.white
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: _selectedViewTab == 1
-                                ? [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.06),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.map_outlined,
-                                size: 18,
-                                color: _selectedViewTab == 1
-                                    ? const Color(0xFF003FB8)
-                                    : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Map',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: _selectedViewTab == 1
-                                      ? FontWeight.bold
-                                      : FontWeight.w500,
-                                  color: _selectedViewTab == 1
-                                      ? const Color(0xFF003FB8)
-                                      : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'List',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: _selectedViewTab == 0
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: _selectedViewTab == 0
+                            ? const Color(0xFF003FB8)
+                            : const Color(0xFF64748B),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // 5. Reactive Clean Architecture BlocBuilder
-              BlocBuilder<WorkshopsCubit, WorkshopsState>(
-                builder: (context, state) {
-                  if (state is WorkshopsLoading) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(Color(0xFF003FB8)),
-                        ),
-                      ),
-                    );
-                  } else if (state is WorkshopsError) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text(
-                          state.message,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: const Color(0xFFDC2626),
-                          ),
-                        ),
-                      ),
-                    );
-                  } else if (state is WorkshopsLoaded) {
-                    final centers = state.centers;
-
-                    if (_selectedViewTab == 1) {
-                      return _buildMapView(centers);
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Subheader
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${centers.length} centers near you',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  'Nearest first',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF003FB8),
-                                  ),
-                                ),
-                                const Icon(Icons.keyboard_arrow_down_rounded,
-                                    size: 16, color: Color(0xFF003FB8)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // List of Workshop Cards from Entity
-                        ...centers.map((center) => _buildCenterCard(center)),
-                      ],
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ],
-          ),
-        ),
-
-        // Space for bottom nav bar
-        const SizedBox(height: 120),
-      ],
-    ),
-  ),
-);
-}
-
-  Widget _buildCenterCard(ServiceCenterEntity center) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed(
-          AppRoutes.centerDetails,
-          arguments: center,
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.precision_manufacturing_rounded,
-                    color: Color(0xFF003FB8),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        center.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            '${center.distance} · ',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                          const Icon(Icons.star_rounded,
-                              color: Color(0xFFF59E0B), size: 14),
-                          Text(
-                            ' ${center.rating} (${center.reviewsCount}) · ',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            center.workingHours,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: center.isOpen
-                                  ? const Color(0xFF16A34A)
-                                  : const Color(0xFFDC2626),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Chips
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: center.tags.map((t) {
-                final isCompatible = t == 'Compatible';
-                return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isCompatible
-                        ? const Color(0xFFECFDF5)
-                        : const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isCompatible) ...[
-                        const Icon(Icons.check_rounded,
-                            size: 12, color: Color(0xFF16A34A)),
-                        const SizedBox(width: 2),
-                      ],
-                      Text(
-                        t,
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: isCompatible
-                              ? const Color(0xFF16A34A)
-                              : const Color(0xFF2563EB),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapView(List<ServiceCenterEntity> centers) {
-    final active = centers.isNotEmpty ? centers.first : null;
-    return Container(
-      height: 480,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      child: Stack(
-        children: [
-          // Stylized Map Grid Canvas
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                color: const Color(0xFFF1F5F9),
-                child: CustomPaint(
-                  painter: _MapGridPainter(),
-                ),
-              ),
             ),
           ),
-
-          // Map Markers for each center
-          if (centers.isNotEmpty)
-            Positioned(
-              top: 80,
-              left: 60,
-              child: _buildMapPin(centers[0], isSelected: true),
-            ),
-          if (centers.length > 1)
-            Positioned(
-              top: 150,
-              right: 50,
-              child: _buildMapPin(centers[1], isSelected: false),
-            ),
-          if (centers.length > 2)
-            Positioned(
-              bottom: 160,
-              left: 100,
-              child: _buildMapPin(centers[2], isSelected: false),
-            ),
-
-          // User current location pulsing pin
-          Positioned(
-            top: 200,
-            left: 180,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: const Color(0xFF003FB8).withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF003FB8),
-                    shape: BoxShape.circle,
-                  ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedViewTab = 1),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: _selectedViewTab == 1 ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: _selectedViewTab == 1
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
-              ),
-            ),
-          ),
-
-          // Floating Selected Workshop Card at bottom
-          if (active != null)
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pushNamed(
-                    AppRoutes.centerDetails,
-                    arguments: active,
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.map_outlined,
+                      size: 18,
+                      color: _selectedViewTab == 1
+                          ? const Color(0xFF003FB8)
+                          : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Map',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: _selectedViewTab == 1
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: _selectedViewTab == 1
+                            ? const Color(0xFF003FB8)
+                            : const Color(0xFF64748B),
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF003FB8),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.build_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              active.name,
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                            Text(
-                              '${active.distance} · ★ ${active.rating} · ${active.workingHours}',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios_rounded,
-                          size: 14, color: Color(0xFF003FB8)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMapPin(ServiceCenterEntity center, {required bool isSelected}) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed(
-          AppRoutes.centerDetails,
-          arguments: center,
-        );
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF003FB8) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.star_rounded,
-                  size: 12,
-                  color: isSelected ? const Color(0xFFFFDB43) : const Color(0xFFF59E0B),
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  '${center.rating}',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.location_on_rounded,
-            size: 28,
-            color: isSelected ? const Color(0xFF003FB8) : const Color(0xFF64748B),
           ),
         ],
       ),
     );
   }
-}
-
-class _MapGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final roadPaint = Paint()
-      ..color = const Color(0xFFE2E8F0)
-      ..strokeWidth = 6
-      ..style = PaintingStyle.stroke;
-
-    final primaryRoadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 10
-      ..style = PaintingStyle.stroke;
-
-    // Draw stylized roads
-    canvas.drawLine(
-        Offset(0, size.height * 0.35),
-        Offset(size.width, size.height * 0.45),
-        primaryRoadPaint);
-    canvas.drawLine(
-        Offset(size.width * 0.3, 0),
-        Offset(size.width * 0.4, size.height),
-        primaryRoadPaint);
-    canvas.drawLine(
-        Offset(0, size.height * 0.7),
-        Offset(size.width, size.height * 0.65),
-        roadPaint);
-    canvas.drawLine(
-        Offset(size.width * 0.75, 0),
-        Offset(size.width * 0.7, size.height),
-        roadPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -7,7 +7,7 @@ import 'package:obd_vision/features/diagnostics/presentation/pages/report_causes
 import 'package:obd_vision/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:obd_vision/features/profile/presentation/pages/language_units_page.dart';
 import 'package:obd_vision/features/profile/presentation/pages/my_device_page.dart';
-import 'package:obd_vision/features/profile/presentation/pages/my_vehicle_page.dart';
+import 'package:obd_vision/features/vehicle/presentation/pages/my_vehicle_page.dart';
 
 void main() {
   group('Figma Complete Screen Verification', () {

@@ -12,13 +12,13 @@ import '../../features/diagnostics/presentation/pages/report_causes_page.dart';
 import '../../features/diagnostics/presentation/pages/report_summary_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
-import '../../features/profile/presentation/pages/add_vehicle_page.dart';
+import '../../features/vehicle/presentation/pages/add_vehicle_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
-import '../../features/profile/presentation/pages/edit_vehicle_page.dart';
+import '../../features/vehicle/presentation/pages/edit_vehicle_page.dart';
 import '../../features/profile/presentation/pages/help_support_page.dart';
 import '../../features/profile/presentation/pages/language_units_page.dart';
 import '../../features/profile/presentation/pages/my_device_page.dart';
-import '../../features/profile/presentation/pages/my_vehicle_page.dart';
+import '../../features/vehicle/presentation/pages/my_vehicle_page.dart';
 import '../../features/profile/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/privacy_data_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
@@ -45,9 +45,7 @@ class AppRouter {
 
   static Map<String, WidgetBuilder> get routes => {
         // --- 1. Splash & Onboarding ---
-        AppRoutes.splash: (context) => SplashPage(
-              onAnimationComplete: () => navigateAfterSplash(context),
-            ),
+        AppRoutes.splash: (_) => const SplashPage(),
         AppRoutes.onboarding: (_) => OnboardingPage(
               preferences: di.sl.isRegistered<AppPreferences>()
                   ? di.sl<AppPreferences>()

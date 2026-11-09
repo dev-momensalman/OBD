@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_router.dart';
 import '../widgets/splash_branding.dart';
 import '../widgets/splash_bloom_wave.dart';
 import '../widgets/splash_panels_painter.dart';
@@ -23,7 +25,7 @@ class SplashPage extends StatefulWidget {
   const SplashPage({
     super.key,
     this.onAnimationComplete,
-    this.animationDuration = const Duration(milliseconds: 4200),
+    this.animationDuration = const Duration(milliseconds: 2400),
     this.enableSound = true,
   });
 
@@ -35,6 +37,7 @@ class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   AudioPlayer? _audioPlayer;
+  Timer? _safetyTimer;
 
   // Stage 1 & 2: Rotation & seam glow
   late final Animation<double> _rotationAnimation;
@@ -169,6 +172,13 @@ class _SplashPageState extends State<SplashPage>
       }
     });
 
+    // Safety fallback: guaranteed progression if animation stalls
+    _safetyTimer = Timer(widget.animationDuration + const Duration(milliseconds: 300), () {
+      if (mounted && !_hasNavigated) {
+        _handleComplete();
+      }
+    });
+
     if (widget.enableSound) {
       _playStartupSound();
     }
@@ -191,16 +201,24 @@ class _SplashPageState extends State<SplashPage>
   }
 
   void _handleComplete() {
-    if (_hasNavigated) return;
+    if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
+    _safetyTimer?.cancel();
+    _safetyTimer = null;
     try {
       _audioPlayer?.stop();
     } catch (_) {}
-    widget.onAnimationComplete?.call();
+    if (widget.onAnimationComplete != null) {
+      widget.onAnimationComplete!();
+    } else {
+      AppRouter.navigateAfterSplash(context);
+    }
   }
 
   @override
   void dispose() {
+    _safetyTimer?.cancel();
+    _safetyTimer = null;
     try {
       _audioPlayer?.stop();
       _audioPlayer?.dispose();

@@ -9,22 +9,27 @@ import '../../domain/entities/dtc_fault.dart';
 class MockObdDataSource {
   final _random = Random();
   Timer? _timer;
-  final _telemetryController = StreamController<TelemetrySnapshotModel>.broadcast();
+  late final StreamController<TelemetrySnapshotModel> _telemetryController =
+      StreamController<TelemetrySnapshotModel>.broadcast(
+    onListen: _startSimulationIfNotRunning,
+    onCancel: () {
+      if (!_telemetryController.hasListener) {
+        stopSimulation();
+      }
+    },
+  );
   final _connectionController = StreamController<ConnectionStatus>.broadcast();
   
   ConnectionStatus _status = ConnectionStatus.connected;
-  double _rpm = 850.0;
+  double _rpm = 780.0;
   double _speed = 0.0;
-  double _coolant = 88.0;
-  double _voltage = 14.1;
+  double _coolant = 96.0;
+  double _voltage = 13.8;
   double _load = 20.0;
   int _ticks = 0;
   bool _shouldFailNextScan = false;
 
-  Stream<TelemetrySnapshotModel> get telemetryStream {
-    _startSimulationIfNotRunning();
-    return _telemetryController.stream;
-  }
+  Stream<TelemetrySnapshotModel> get telemetryStream => _telemetryController.stream;
 
   Stream<ConnectionStatus> get connectionStatusStream async* {
     yield _status;
@@ -43,12 +48,18 @@ class MockObdDataSource {
 
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       _ticks++;
-      final throttleCycle = sin(_ticks * 0.05);
-      _rpm = 850.0 + (throttleCycle.abs() * 2800.0) + (_random.nextDouble() * 50 - 25);
-      _speed = (throttleCycle.abs() * 95.0) + (_random.nextDouble() * 4 - 2);
-      _load = 18.0 + (throttleCycle.abs() * 55.0);
-      _voltage = 14.0 + (_random.nextDouble() * 0.3 - 0.15);
-      _coolant = 90.0 + sin(_ticks * 0.01) * 4.0;
+      if (_ticks <= 1) {
+        _rpm = 780.0;
+        _coolant = 96.0;
+        _voltage = 13.8;
+      } else {
+        final throttleCycle = sin(_ticks * 0.05);
+        _rpm = 780.0 + (throttleCycle.abs() * 2800.0) + (_random.nextDouble() * 50 - 25);
+        _speed = (throttleCycle.abs() * 95.0) + (_random.nextDouble() * 4 - 2);
+        _load = 18.0 + (throttleCycle.abs() * 55.0);
+        _voltage = 13.8 + (_random.nextDouble() * 0.3 - 0.15);
+        _coolant = 96.0 + sin(_ticks * 0.01) * 2.0;
+      }
 
       _telemetryController.add(TelemetrySnapshotModel(
         engineRpm: _rpm.clamp(750.0, 6500.0),
@@ -99,8 +110,13 @@ class MockObdDataSource {
     );
   }
 
-  void dispose() {
+  void stopSimulation() {
     _timer?.cancel();
+    _timer = null;
+  }
+
+  void dispose() {
+    stopSimulation();
     _telemetryController.close();
     _connectionController.close();
   }
