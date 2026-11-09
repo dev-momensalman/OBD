@@ -46,57 +46,62 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-
-              // 1. Top Header Row: Back / Title / Notification Bell (Figma Node 404:3383)
-              Row(
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Top Curved Blue Header (matching Figma Node 404:3383)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 50, bottom: 20, left: 16, right: 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF003FB8), // Royal Blue
+                    Color(0xFF001C52), // Marine Navy
+                  ],
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   if (widget.onBack != null)
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Color(0xFF0F172A), size: 20),
+                          color: Colors.white, size: 20),
                       onPressed: widget.onBack,
                     )
                   else
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 40),
                   Text(
                     'Service Centers',
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0F172A),
+                      color: Colors.white,
                     ),
                   ),
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         IconButton(
+                          padding: EdgeInsets.zero,
                           icon: const Icon(Icons.notifications_none_rounded,
-                              color: Color(0xFF002264), size: 22),
+                              color: Color(0xFF003FB8), size: 22),
                           onPressed: () {
                             Navigator.of(context).pushNamed(AppRoutes.notifications);
                           },
@@ -118,27 +123,34 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+            ),
 
-              // 2. Active Repair Progress Banner (Figma Node 404:3388)
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pushNamed(AppRoutes.centerDetails);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFD9E2F0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF002F8A).withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 16),
+
+                  // 2. Active Repair Progress Banner (Figma Node 404:3388)
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(AppRoutes.centerDetails);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFD9E2F0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF002F8A).withValues(alpha: 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                   child: Row(
                     children: [
                       Container(
@@ -450,15 +462,17 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                   return const SizedBox.shrink();
                 },
               ),
-
-              // Space for bottom nav bar
-              const SizedBox(height: 120),
             ],
           ),
         ),
-      ),
-    );
-  }
+
+        // Space for bottom nav bar
+        const SizedBox(height: 120),
+      ],
+    ),
+  ),
+);
+}
 
   Widget _buildCenterCard(ServiceCenterEntity center) {
     return Container(
