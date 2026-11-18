@@ -86,7 +86,9 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _selectedTab = 1),
+                      onTap: () {
+                        Navigator.of(context).pushReplacementNamed(AppRoutes.reportCauses);
+                      },
                       child: Container(
                         decoration: BoxDecoration(
                           color: _selectedTab == 1
