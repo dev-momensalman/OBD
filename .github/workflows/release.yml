@@ -1,0 +1,59 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Publish Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: OBD Vision ${{ github.ref_name }}
+          body: |
+            ## 🚗 OBD Vision - Android Release ${{ github.ref_name }}
+            
+            Enterprise-grade AI-powered OBD-II vehicle fault diagnosis and live telemetry platform.
+            
+            ### 📦 Download Assets
+            - 📱 **Android APK:** [`app-release.apk`](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/app-release.apk)
+            
+            ### ✨ Highlights
+            - 📡 Dual-mode OBD-II live telemetry (Bluetooth Low Energy & Simulator).
+            - 🔍 Real-time DTC fault codes reading and freeze-frame diagnostics.
+            - 🧠 Hybrid AI Diagnostic Engine with ranked cause inference.
+            - 🛠️ Service centers directory & appointment booking.
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

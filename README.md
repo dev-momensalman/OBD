@@ -1,5 +1,8 @@
 # 🚗 Intelligent OBD-II Vehicle Fault Diagnosis & Health Monitoring
 
+[![Download APK](https://img.shields.io/badge/Download%20APK-v1.0.0-02569B?style=for-the-badge&logo=android&logoColor=white)](https://github.com/dev-momensalman/OBD/releases/latest)
+[![GitHub Release](https://img.shields.io/github/v/release/dev-momensalman/OBD?style=for-the-badge&color=22c55e&label=Release)](https://github.com/dev-momensalman/OBD/releases)
+
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.35+-02569B?logo=flutter)](https://flutter.dev)
 [![Dart Version](https://img.shields.io/badge/Dart-3.9+-0175C2?logo=dart)](https://dart.dev)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20%2B%20BLoC-success)](https://bloclibrary.dev)
@@ -7,6 +10,18 @@
 [![License](https://img.shields.io/badge/License-Proprietary-red)](#license)
 
 An enterprise-grade, AI-powered automotive diagnostic and proactive health monitoring mobile application built with Flutter. The platform interfaces with vehicles via OBD-II (ELM327 / ESP32 custom dongle), continuously ingests telemetry, executes deterministic edge rules, and combines Machine Learning anomaly detection with Retrieval-Augmented Generation (RAG) and LLM explainability to deliver clear, actionable diagnostic reports.
+
+---
+
+## 📱 تحميل التطبيق (Download APK)
+
+| الحزمة | الإصدار | الحجم | رابط التحميل المباشر |
+| :--- | :---: | :---: | :--- |
+| **Android Release APK** | `v1.0.0` | **62.9 MB** | [⬇️ **تحميل أحدث إصدار (Download APK)**](https://github.com/dev-momensalman/OBD/releases/download/v1.0.0/app-release.apk) |
+| **GitHub Releases Hub** | Latest | All Builds | [📦 **جميع الإصدارات والتحميلات (Releases Page)**](https://github.com/dev-momensalman/OBD/releases) |
+| **Direct Mirror Branch** | `v1.0.0` | **62.9 MB** | [🔗 **رابط التحميل البديل المباشر (Raw Download)**](https://github.com/dev-momensalman/OBD/raw/release/app-release.apk) |
+
+---
 
 ---
 
