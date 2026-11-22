@@ -28,6 +28,7 @@ class MockObdDataSource {
   double _load = 20.0;
   int _ticks = 0;
   bool _shouldFailNextScan = false;
+  bool _enableFluctuation = false;
 
   Stream<TelemetrySnapshotModel> get telemetryStream => _telemetryController.stream;
 
@@ -40,6 +41,10 @@ class MockObdDataSource {
     _shouldFailNextScan = fail;
   }
 
+  void setFluctuationEnabled(bool enabled) {
+    _enableFluctuation = enabled;
+  }
+
   void _startSimulationIfNotRunning() {
     if (_timer != null && _timer!.isActive) return;
 
@@ -48,10 +53,12 @@ class MockObdDataSource {
 
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       _ticks++;
-      if (_ticks <= 1) {
+      if (!_enableFluctuation || _ticks <= 1) {
         _rpm = 780.0;
         _coolant = 96.0;
         _voltage = 13.8;
+        _speed = 0.0;
+        _load = 20.0;
       } else {
         final throttleCycle = sin(_ticks * 0.05);
         _rpm = 780.0 + (throttleCycle.abs() * 2800.0) + (_random.nextDouble() * 50 - 25);
