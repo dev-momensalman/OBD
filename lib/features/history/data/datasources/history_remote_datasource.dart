@@ -60,7 +60,7 @@ class MockHistoryRemoteDataSource implements IHistoryRemoteDataSource {
 
     if (filterCategory == 'Faults') {
       return models.where((m) => m.isWarning).toList();
-    } else if (filterCategory == 'Routine') {
+    } else if (filterCategory == 'Routine' || filterCategory == 'Trips') {
       return models.where((m) => !m.isWarning).toList();
     }
 

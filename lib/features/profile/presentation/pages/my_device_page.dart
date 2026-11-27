@@ -1,10 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 
 /// My Device Page (Figma Node 325:2262)
 /// Manages paired OBD-II hardware scanner, status, firmware, re-pairing, and deactivation.
-class MyDevicePage extends StatelessWidget {
+class MyDevicePage extends StatefulWidget {
   const MyDevicePage({super.key});
+
+  @override
+  State<MyDevicePage> createState() => _MyDevicePageState();
+}
+
+class _MyDevicePageState extends State<MyDevicePage> {
+  bool _isPaired = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (di.sl.isRegistered<AppPreferences>()) {
+      _isPaired = di.sl<AppPreferences>().devicePaired;
+    }
+  }
+
+  String _activeVehicleName(BuildContext context) {
+    try {
+      final v = context.read<VehicleCubit>().state.activeVehicle;
+      if (v != null) return v.name;
+    } catch (_) {}
+    if (di.sl.isRegistered<VehicleCubit>()) {
+      return di.sl<VehicleCubit>().state.activeVehicle?.name ?? 'Corolla 2018';
+    }
+    return 'Corolla 2018';
+  }
+
+  String _activeSerial() {
+    if (di.sl.isRegistered<AppPreferences>()) {
+      final s = di.sl<AppPreferences>().activatedSerial;
+      if (s != null && s.isNotEmpty) return s;
+    }
+    return '••••-••••-A7F2';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +82,7 @@ class MyDevicePage extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -51,7 +90,7 @@ class MyDevicePage extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    'My device',
+                    context.l10n.myDeviceTitle,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -132,7 +171,9 @@ class MyDevicePage extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE6F6EE),
+                                color: _isPaired
+                                    ? const Color(0xFFE6F6EE)
+                                    : const Color(0xFFFEE2E2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -141,18 +182,24 @@ class MyDevicePage extends StatelessWidget {
                                   Container(
                                     width: 6,
                                     height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF1FC16B),
+                                    decoration: BoxDecoration(
+                                      color: _isPaired
+                                          ? const Color(0xFF1FC16B)
+                                          : const Color(0xFFDC2626),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Connected',
+                                    _isPaired
+                                        ? context.l10n.deviceConnectedStatus
+                                        : context.l10n.deviceDeactivatedMsg,
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF1FC16B),
+                                      color: _isPaired
+                                          ? const Color(0xFF1FC16B)
+                                          : const Color(0xFFDC2626),
                                     ),
                                   ),
                                 ],
@@ -170,13 +217,16 @@ class MyDevicePage extends StatelessWidget {
                         ),
 
                         // Specifications List
-                        _buildSpecRow('Serial', '••••-••••-A7F2'),
+                        _buildSpecRow(context.l10n.serialLabel, _activeSerial()),
                         const SizedBox(height: 12),
-                        _buildSpecRow('Firmware', 'v1.2.0'),
+                        _buildSpecRow(context.l10n.firmwareLabel, 'v2.4.1'),
                         const SizedBox(height: 12),
-                        _buildSpecRow('Last connected', 'Today, 9:12 AM'),
+                        _buildSpecRow(context.l10n.lastConnectedLabel, 'Today, 9:12 AM'),
                         const SizedBox(height: 12),
-                        _buildSpecRow('Linked vehicle', 'Corolla 2018'),
+                        _buildSpecRow(
+                          context.l10n.linkedVehicleLabel,
+                          _activeVehicleName(context),
+                        ),
                       ],
                     ),
                   ),
@@ -200,8 +250,17 @@ class MyDevicePage extends StatelessWidget {
                       children: [
                         _buildActionRow(
                           icon: Icons.bluetooth_searching_rounded,
-                          title: 'Re-pair device',
-                          onTap: () {},
+                          title: context.l10n.rePairDevice,
+                          onTap: () {
+                            setState(() => _isPaired = true);
+                            if (di.sl.isRegistered<AppPreferences>()) {
+                              di.sl<AppPreferences>().setDevicePaired(true);
+                            }
+                            AppActions.showSnack(
+                              context,
+                              context.l10n.devicePairedMsg,
+                            );
+                          },
                         ),
                         const Divider(
                           color: Color(0xFFF1F5F9),
@@ -209,7 +268,7 @@ class MyDevicePage extends StatelessWidget {
                         ),
                         _buildActionRow(
                           icon: Icons.system_update_alt_rounded,
-                          title: 'Check for updates',
+                          title: context.l10n.checkForUpdates,
                           badge: Container(
                             width: 8,
                             height: 8,
@@ -218,7 +277,21 @@ class MyDevicePage extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          onTap: () {},
+                          onTap: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (dlgCtx) => AlertDialog(
+                                title: Text(context.l10n.firmwareUpToDateTitle),
+                                content: Text(context.l10n.firmwareUpToDateBody),
+                                actions: [
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.of(dlgCtx).pop(),
+                                    child: Text(context.l10n.closeButton),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -228,14 +301,24 @@ class MyDevicePage extends StatelessWidget {
                   // Destructive Action: Deactivate device
                   Center(
                     child: TextButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        setState(() => _isPaired = false);
+                        if (di.sl.isRegistered<AppPreferences>()) {
+                          di.sl<AppPreferences>().setDevicePaired(false);
+                        }
+                        AppActions.showSnack(
+                          context,
+                          context.l10n.deviceDeactivatedMsg,
+                          isError: true,
+                        );
+                      },
                       icon: const Icon(
                         Icons.link_off_rounded,
                         color: Color(0xFFC62828),
                         size: 20,
                       ),
                       label: Text(
-                        'Deactivate device',
+                        context.l10n.deactivateDevice,
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -312,8 +395,7 @@ class MyDevicePage extends StatelessWidget {
               badge,
               const SizedBox(width: 8),
             ],
-            const Icon(
-              Icons.chevron_right_rounded,
+            const RtlForwardChevron(
               color: Color(0xFF94A3B8),
               size: 20,
             ),

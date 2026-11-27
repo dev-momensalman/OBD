@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import '../utils/service_center_l10n.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/entities/service_center_entity.dart';
 
@@ -38,7 +40,7 @@ class BookingConfirmPage extends StatelessWidget {
 
     final displaySchedule = schedule ?? 'Thu, Dec 21 · 10:00 AM';
     final displayRef = refNumber ?? 'Ref #AN-20481';
-    final displayVehicle = vehicleName ?? 'Toyota Corolla 2018';
+    final displayVehicle = vehicleName ?? (context.isArabic ? 'تويوتا كورولا 2018' : 'Toyota Corolla 2018');
     final displayPlate = vehiclePlate ?? '4821 KSA';
 
     return Scaffold(
@@ -66,7 +68,7 @@ class BookingConfirmPage extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                'Booking Confirmation',
+                context.l10n.bookingConfirmationTitle,
                 style: GoogleFonts.inter(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -131,7 +133,7 @@ class BookingConfirmPage extends StatelessWidget {
 
                   // Heading
                   Text(
-                    'Booking Confirmed',
+                    context.l10n.bookingConfirmedHeading,
                     style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -192,8 +194,8 @@ class BookingConfirmPage extends StatelessWidget {
                         // Row 1: Workshop
                         _buildSummaryRow(
                           icon: Icons.storefront_rounded,
-                          title: activeCenter.name,
-                          subtitle: 'Automotive Diagnostics & Care',
+                          title: ServiceCenterL10n.name(context, activeCenter.name),
+                          subtitle: context.l10n.automotiveDiagnosticsCare,
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
@@ -207,7 +209,7 @@ class BookingConfirmPage extends StatelessWidget {
                         _buildSummaryRow(
                           icon: Icons.calendar_today_rounded,
                           title: displaySchedule,
-                          subtitle: 'Confirmed arrival slot',
+                          subtitle: context.l10n.confirmedArrivalSlot,
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
@@ -247,7 +249,7 @@ class BookingConfirmPage extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    'Selected vehicle',
+                                    context.l10n.selectedVehicleLabel,
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
                                       color: const Color(0xFF64748B),
@@ -319,7 +321,7 @@ class BookingConfirmPage extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Track booking',
+                      context.l10n.trackBookingButton,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -347,7 +349,7 @@ class BookingConfirmPage extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Back to home',
+                      context.l10n.backToHomeButton,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

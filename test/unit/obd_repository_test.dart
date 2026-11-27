@@ -43,5 +43,15 @@ void main() {
       expect(evidence!.coolantTempC, 94.0);
       expect(evidence.batteryVoltage, 14.1);
     });
+
+    test('MockObdDataSource fluctuates speed and rpm when enabled', () async {
+      final demoSource = MockObdDataSource(enableFluctuation: true);
+      addTearDown(demoSource.dispose);
+
+      final samples = await demoSource.telemetryStream.take(5).toList();
+      expect(samples.length, 5);
+      expect(samples.last.vehicleSpeedKmH, greaterThan(0.0));
+      expect(samples.last.engineRpm, greaterThan(780.0));
+    });
   });
 }

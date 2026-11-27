@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Dynamic 7-Day Calendar Strip Picker (Figma Node 435:2041)
 /// Dynamically calculates upcoming days from DateTime.now() to eliminate hardcoded stagnation.
@@ -62,7 +63,7 @@ class CalendarStripPicker extends StatelessWidget {
             onTap: () => onSelectDate(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              margin: const EdgeInsets.only(right: 8),
+              margin: const EdgeInsetsDirectional.only(end: 8),
               width: 50,
               height: 64,
               decoration: BoxDecoration(
@@ -90,7 +91,18 @@ class CalendarStripPicker extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    item['weekday'] as String,
+                    context.isArabic
+                        ? (const {
+                            'Mo': 'إث',
+                            'Tu': 'ث',
+                            'We': 'أر',
+                            'Th': 'خ',
+                            'Fr': 'ج',
+                            'Sa': 'س',
+                            'Su': 'ح',
+                          }[item['weekday']] ??
+                            item['weekday'] as String)
+                        : item['weekday'] as String,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:obd_vision/core/constants/app_colors.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../bloc/dashboard_cubit.dart';
 import '../bloc/dashboard_state.dart';
 import '../widgets/connection_status_bar.dart';
@@ -15,7 +16,7 @@ class HomeCockpitPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OBD-II COCKPIT'),
+        title: Text(context.l10n.cockpitTitle),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -25,7 +26,7 @@ class HomeCockpitPage extends StatelessWidget {
                 prev.connectionStatus != curr.connectionStatus,
             builder: (context, state) {
               return Padding(
-                padding: const EdgeInsets.only(right: 16.0),
+                padding: const EdgeInsetsDirectional.only(end: 16.0),
                 child: Icon(
                   state.isConnected
                       ? Icons.bluetooth_connected

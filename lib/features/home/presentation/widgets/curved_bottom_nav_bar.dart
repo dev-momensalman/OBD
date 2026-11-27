@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Navigation Tab Item Definition
 class NavTabItem {
@@ -137,8 +138,19 @@ class _CurvedBottomNavBarState extends State<CurvedBottomNavBar>
           return AnimatedBuilder(
             animation: _animController,
             builder: (context, _) {
-              final currentNotchX = _notchAnim.value * totalWidth;
-              final activeTab = CurvedBottomNavBar.tabs[widget.selectedIndex.clamp(0, 4)];
+              final rawNotchX = _notchAnim.value * totalWidth;
+              final isRtl = Directionality.of(context) == TextDirection.rtl;
+              final currentNotchX = isRtl ? (totalWidth - rawNotchX) : rawNotchX;
+              final activeIndex = widget.selectedIndex.clamp(0, 4);
+              final activeTab = CurvedBottomNavBar.tabs[activeIndex];
+              final l10n = context.l10n;
+              final localizedLabel = switch (activeIndex) {
+                0 => l10n.navHome,
+                1 => l10n.navService,
+                2 => l10n.navDiagnosis,
+                3 => l10n.navHistory,
+                _ => l10n.navProfile,
+              };
 
               return Stack(
                 clipBehavior: Clip.none,
@@ -236,8 +248,8 @@ class _CurvedBottomNavBarState extends State<CurvedBottomNavBar>
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 220),
                         child: Text(
-                          activeTab.label,
-                          key: ValueKey(activeTab.label),
+                          localizedLabel,
+                          key: ValueKey(localizedLabel),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,

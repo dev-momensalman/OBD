@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../injection_container.dart' as di;
 import '../../domain/entities/activity_log_entity.dart';
@@ -16,6 +18,21 @@ class ActivityHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    HistoryCubit? existing;
+    try {
+      existing = context.read<HistoryCubit>();
+    } catch (_) {}
+
+    if (existing != null) {
+      if (existing.state is HistoryInitial) {
+        existing.fetchHistory();
+      }
+      return BlocProvider.value(
+        value: existing,
+        child: _ActivityHistoryView(onBack: onBack),
+      );
+    }
+
     return BlocProvider(
       create: (_) => di.sl<HistoryCubit>()..fetchHistory(),
       child: _ActivityHistoryView(onBack: onBack),
@@ -39,6 +56,14 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final filterLabels = [
+      l10n.filterAll,
+      l10n.filterFaults,
+      l10n.filterRoutine,
+      l10n.filterTrips,
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -57,14 +82,14 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                 children: [
                   if (widget.onBack != null)
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      icon: Icon(context.backIcon,
                           color: Color(0xFF0F172A), size: 20),
                       onPressed: widget.onBack,
                     )
                   else
                     const SizedBox(width: 4),
                   Text(
-                    'Diagnostic History',
+                    context.l10n.diagnosticHistoryTitle,
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -74,7 +99,24 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                   IconButton(
                     icon: const Icon(Icons.file_download_outlined,
                         color: Color(0xFF003FB8), size: 22),
-                    onPressed: () {},
+                    onPressed: () {
+                      final st = context.read<HistoryCubit>().state;
+                      final buffer = StringBuffer(
+                        '${context.l10n.diagnosticHistoryTitle}\n',
+                      );
+                      if (st is HistoryLoaded) {
+                        for (final item in st.logs) {
+                          buffer.writeln(
+                            '• [${item.date}] ${item.title} (${item.healthScore}%) - ${item.subtitle}',
+                          );
+                        }
+                      }
+                      AppActions.copyText(
+                        context,
+                        buffer.toString(),
+                        feedback: context.l10n.historyExportedMsg,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -88,9 +130,9 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                   children: List.generate(_filters.length, (index) {
                     final isSelected = _selectedFilter == index;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsetsDirectional.only(end: 8),
                       child: ChoiceChip(
-                        label: Text(_filters[index]),
+                        label: Text(filterLabels[index]),
                         selected: isSelected,
                         onSelected: (_) {
                           setState(() => _selectedFilter = index);
@@ -156,8 +198,8 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF003FB8),
                               ),
-                              child: const Text('Retry',
-                                  style: TextStyle(color: Colors.white)),
+                              child: Text(context.l10n.retryButton,
+                                  style: const TextStyle(color: Colors.white)),
                             ),
                           ],
                         ),
@@ -169,7 +211,7 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         child: Center(
                           child: Text(
-                            'No diagnostic logs found for this filter.',
+                            context.l10n.noDiagnosticLogs,
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               color: const Color(0xFF64748B),
@@ -198,13 +240,17 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
     );
   }
 
-  Widget _buildActivityItem(BuildContext context, ActivityLogEntity act) {
+  Widget _buildActivityItem(BuildContext context, ActivityLogEntity rawAct) {
+    final act = context.isArabic ? _localizeArabicLog(rawAct) : rawAct;
     final isWarning = act.isWarning;
     final score = act.healthScore;
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed(AppRoutes.reportSummary);
+        Navigator.of(context).pushNamed(
+          AppRoutes.reportSummary,
+          arguments: act,
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -294,6 +340,7 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                   const SizedBox(height: 4),
                   Text(
                     act.title,
+                    textDirection: detectTextDirection(act.title),
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -303,6 +350,7 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
                   const SizedBox(height: 2),
                   Text(
                     act.subtitle,
+                    textDirection: detectTextDirection(act.subtitle),
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: const Color(0xFF64748B),
@@ -312,10 +360,57 @@ class _ActivityHistoryViewState extends State<_ActivityHistoryView> {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+            const RtlForwardChevron(color: Color(0xFF94A3B8)),
           ],
         ),
       ),
+    );
+  }
+
+  ActivityLogEntity _localizeArabicLog(ActivityLogEntity raw) {
+    const dateMap = {
+      'Just now': 'الآن',
+      'Today, 09:40': 'اليوم، 09:40',
+      'Yesterday, 14:15': 'أمس، 14:15',
+      '3 days ago': 'منذ 3 أيام',
+      '1 week ago': 'منذ أسبوع',
+    };
+    const severityMap = {
+      'Warning': 'تحذير',
+      'WARNING': 'تحذير',
+      'CRITICAL': 'حرج',
+      'HEALTHY': 'سليم',
+      'Normal': 'طبيعي',
+      'Mild': 'طفيف',
+      'Optimal': 'مثالي',
+    };
+    const titleMap = {
+      'High Coolant Temp & Misfire': 'ارتفاع حرارة المبرد وتقطيع بالاحتراق',
+      'Routine System Pre-Check': 'فحص دوري مبدئي للنظام',
+      'Battery Alternator Fluctuation': 'تذبذب جهد البطارية والدينامو',
+      'Scheduled Full Vehicle Diagnostic': 'فحص شامل مجدول للمركبة',
+    };
+    const subtitleMap = {
+      'P0301, P0171 detected · 24 sensors recorded':
+          'تم رصد P0301، P0171 · قراءة 24 حساساً',
+      'All electronic control units responding':
+          'جميع وحدات التحكم الإلكترونية تستجيب طبيعياً',
+      'Voltage dipped to 12.1V under engine load':
+          'انخفض الجهد إلى 12.1V تحت حمل المحرك',
+      'Powertrain, ABS & SRS full sweep passed':
+          'اجتاز فحص المحرك وABS والوسائد الهوائية بنجاح',
+    };
+
+    return ActivityLogEntity(
+      id: raw.id,
+      date: dateMap[raw.date] ?? raw.date,
+      title: titleMap[raw.title] ?? raw.title,
+      subtitle: subtitleMap[raw.subtitle] ?? raw.subtitle,
+      healthScore: raw.healthScore,
+      isWarning: raw.isWarning,
+      severity: severityMap[raw.severity] ?? raw.severity,
+      detectedDtcs: raw.detectedDtcs,
+      sensorsRecorded: raw.sensorsRecorded,
     );
   }
 }

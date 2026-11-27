@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import 'onboarding_page_indicator.dart';
 
 /// Bottom Navigation Area for Onboarding:
@@ -64,7 +65,7 @@ class OnboardingBottomControls extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Next',
+                          context.l10n.nextButton,
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -135,7 +136,7 @@ class OnboardingBottomControls extends StatelessWidget {
                                   ? Opacity(
                                       opacity: textOpacity.clamp(0.0, 1.0),
                                       child: Text(
-                                        'Get Started',
+                                        context.l10n.getStartedButton,
                                         style: GoogleFonts.inter(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import 'package:obd_vision/core/constants/app_colors.dart';
 
 /// Pixel-perfect Onboarding Illustration Card with top-right notch cutout and Skip action.
@@ -47,9 +48,9 @@ class OnboardingCard extends StatelessWidget {
 
               // Skip Action anchored inside top-right notch cutout (x: 315, y: 68 in Figma)
               if (showSkip)
-                Positioned(
+                PositionedDirectional(
                   top: 20 * scale,
-                  right: 24 * scale,
+                  end: 24 * scale,
                   child: GestureDetector(
                     onTap: onSkip,
                     behavior: HitTestBehavior.opaque,
@@ -59,7 +60,7 @@ class OnboardingCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       child: Text(
-                        'Skip',
+                        context.l10n.skipButton,
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

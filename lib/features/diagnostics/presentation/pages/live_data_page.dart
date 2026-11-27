@@ -1,11 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_routes.dart';
+import 'package:obd_vision/core/constants/app_routes.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:obd_vision/features/settings/presentation/bloc/settings_state.dart';
+import '../bloc/dashboard_cubit.dart';
+import '../bloc/dashboard_state.dart';
 
 /// Authentic Live Data Telemetry Screen matching Figma Node 269:774
-/// Features interactive circular gauge telemetry sensors, real-time live data simulation,
-/// and responsive action controls (Pause/Resume, Run Diagnosis).
+/// Subscribes to [DashboardCubit] live stream when provided, respects unit settings
+/// from [SettingsCubit], and preserves local Pause/Resume controls.
 class LiveDataPage extends StatefulWidget {
   const LiveDataPage({super.key});
 
@@ -17,34 +23,43 @@ class _LiveDataPageState extends State<LiveDataPage> {
   bool _isPaused = false;
   Timer? _telemetryTimer;
 
-  // Real-time sensor state values
+  // Fallback telemetry values when no ancestor DashboardCubit exists (or paused snapshot)
   int _rpm = 780;
   double _voltage = 13.8;
-  int _fuelTrim = 18;
+  final int _fuelTrim = 18;
   int _engineLoad = 24;
   int _coolantTemp = 96;
-  final int _speed = 0;
-  int _throttle = 14;
-  int _mapPressure = 34;
+  int _speed = 0;
+  final int _throttle = 14;
+  final int _mapPressure = 34;
+
+  bool _hasDashboardCubit(BuildContext context) {
+    try {
+      context.read<DashboardCubit>();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  SettingsState _readSettings(BuildContext context) {
+    try {
+      return context.watch<SettingsCubit>().state;
+    } catch (_) {
+      return const SettingsState();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _startTelemetryStream();
-  }
-
-  void _startTelemetryStream() {
-    _telemetryTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
-      if (!_isPaused && mounted) {
+    _telemetryTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+      if (!_isPaused && mounted && !_hasDashboardCubit(context)) {
         setState(() {
-          // Slight realistic telemetry jitter
           _rpm = 775 + (DateTime.now().millisecond % 25);
           _voltage = 13.7 + ((DateTime.now().millisecond % 3) * 0.1);
-          _fuelTrim = 17 + (DateTime.now().millisecond % 3);
           _engineLoad = 23 + (DateTime.now().millisecond % 3);
           _coolantTemp = 95 + (DateTime.now().millisecond % 3);
-          _throttle = 13 + (DateTime.now().millisecond % 3);
-          _mapPressure = 33 + (DateTime.now().millisecond % 3);
         });
       }
     });
@@ -58,18 +73,42 @@ class _LiveDataPageState extends State<LiveDataPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final settings = _readSettings(context);
+
+    DashboardState? dashboardState;
+    try {
+      dashboardState = context.watch<DashboardCubit>().state;
+    } catch (_) {}
+
+    if (!_isPaused && dashboardState?.telemetry != null) {
+      final t = dashboardState!.telemetry!;
+      _rpm = t.engineRpm.toInt();
+      _voltage = t.batteryVoltage;
+      _engineLoad = t.engineLoadPercent.toInt();
+      _coolantTemp = t.coolantTempC.toInt();
+      _speed = t.vehicleSpeedKmH.toInt();
+    }
+
+    final displayCoolant = settings.usesFahrenheit
+        ? ((_coolantTemp * 9.0 / 5.0) + 32.0).toInt()
+        : _coolantTemp;
+    final displaySpeed =
+        settings.usesMiles ? (_speed * 0.621371).toInt() : _speed;
+    final speedUnit = settings.usesMiles ? 'mph' : 'Km / h';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF242424), size: 20),
+          icon: Icon(context.backIcon,
+              color: const Color(0xFF242424), size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Live data',
+          l10n.liveDataTitle,
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -95,26 +134,26 @@ class _LiveDataPageState extends State<LiveDataPage> {
                   childAspectRatio: 0.95,
                   children: [
                     _buildGaugeCard(
-                      title: 'Engine speed',
-                      status: 'Normal',
+                      title: l10n.liveSensorEngineSpeed,
+                      status: l10n.statusNormal,
                       statusColor: const Color(0xFF1FC16B),
-                      unit: 'RPM',
+                      unit: l10n.unitRpm,
                       value: '$_rpm',
                       progress: (_rpm / 3000).clamp(0.0, 1.0),
                       gaugeColor: const Color(0xFF1FC16B),
                     ),
                     _buildGaugeCard(
-                      title: 'Battery',
-                      status: 'Normal',
+                      title: l10n.liveSensorBattery,
+                      status: l10n.statusNormal,
                       statusColor: const Color(0xFF1FC16B),
-                      unit: 'Volt',
+                      unit: l10n.unitVolt,
                       value: _voltage.toStringAsFixed(1),
                       progress: (_voltage / 16.0).clamp(0.0, 1.0),
                       gaugeColor: const Color(0xFF1FC16B),
                     ),
                     _buildGaugeCard(
-                      title: 'Short fuel trim',
-                      status: 'High',
+                      title: l10n.liveSensorShortFuelTrim,
+                      status: l10n.statusHigh,
                       statusColor: const Color(0xFFD00416),
                       unit: '%',
                       value: '+$_fuelTrim',
@@ -122,8 +161,8 @@ class _LiveDataPageState extends State<LiveDataPage> {
                       gaugeColor: const Color(0xFFD00416),
                     ),
                     _buildGaugeCard(
-                      title: 'Engine Load',
-                      status: 'Medium',
+                      title: l10n.liveSensorEngineLoad,
+                      status: l10n.statusMedium,
                       statusColor: const Color(0xFFDFB400),
                       unit: '%',
                       value: '$_engineLoad',
@@ -131,26 +170,31 @@ class _LiveDataPageState extends State<LiveDataPage> {
                       gaugeColor: const Color(0xFFDFB400),
                     ),
                     _buildGaugeCard(
-                      title: 'Coolant temp',
-                      status: 'Normal',
-                      statusColor: const Color(0xFF1FC16B),
-                      unit: '°C',
-                      value: '$_coolantTemp',
+                      title: l10n.liveSensorCoolantTemp,
+                      status:
+                          _coolantTemp >= 105 ? l10n.statusHigh : l10n.statusNormal,
+                      statusColor: _coolantTemp >= 105
+                          ? const Color(0xFFD00416)
+                          : const Color(0xFF1FC16B),
+                      unit: settings.tempUnit,
+                      value: '$displayCoolant',
                       progress: (_coolantTemp / 120).clamp(0.0, 1.0),
-                      gaugeColor: const Color(0xFF1FC16B),
+                      gaugeColor: _coolantTemp >= 105
+                          ? const Color(0xFFD00416)
+                          : const Color(0xFF1FC16B),
                     ),
                     _buildGaugeCard(
-                      title: 'Vehicle speed',
-                      status: 'Normal',
+                      title: l10n.liveSensorVehicleSpeed,
+                      status: l10n.statusNormal,
                       statusColor: const Color(0xFF1FC16B),
-                      unit: 'Km / h',
-                      value: '$_speed',
+                      unit: speedUnit,
+                      value: '$displaySpeed',
                       progress: (_speed / 200).clamp(0.0, 1.0),
                       gaugeColor: const Color(0xFF1FC16B),
                     ),
                     _buildGaugeCard(
-                      title: 'Throttle pos',
-                      status: 'Normal',
+                      title: l10n.liveSensorThrottlePos,
+                      status: l10n.statusNormal,
                       statusColor: const Color(0xFF1FC16B),
                       unit: '%',
                       value: '$_throttle',
@@ -158,8 +202,8 @@ class _LiveDataPageState extends State<LiveDataPage> {
                       gaugeColor: const Color(0xFF1FC16B),
                     ),
                     _buildGaugeCard(
-                      title: 'MAP Pressure',
-                      status: 'Normal',
+                      title: l10n.liveSensorMapPressure,
+                      status: l10n.statusNormal,
                       statusColor: const Color(0xFF1FC16B),
                       unit: 'kPa',
                       value: '$_mapPressure',
@@ -171,7 +215,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
               ),
             ),
 
-            // Bottom Actions: Pause & Run Diagnosis (Figma Node 269:782 & 269:783)
+            // Bottom Actions: Pause & Run Diagnosis
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -201,7 +245,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
                           ),
                         ),
                         child: Text(
-                          _isPaused ? 'Resume' : 'Pause',
+                          _isPaused ? l10n.resumeButton : l10n.pauseButton,
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -216,7 +260,11 @@ class _LiveDataPageState extends State<LiveDataPage> {
                       height: 52,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pushNamed(AppRoutes.scan);
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            AppRoutes.home,
+                            (route) => false,
+                            arguments: 2,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF003FB8),
@@ -227,7 +275,7 @@ class _LiveDataPageState extends State<LiveDataPage> {
                           ),
                         ),
                         child: Text(
-                          'Run Diagnosis',
+                          l10n.runDiagnosis,
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -271,7 +319,6 @@ class _LiveDataPageState extends State<LiveDataPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Header: Status + Sensor Title
           Column(
             children: [
               Text(
@@ -295,8 +342,6 @@ class _LiveDataPageState extends State<LiveDataPage> {
               ),
             ],
           ),
-
-          // Circular Ring Visual
           SizedBox(
             width: 86,
             height: 86,

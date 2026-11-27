@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Pre-Scan Checklist View (Figma Node 186:1695)
 /// Step 1: Informs the driver of prerequisites before scanning OBD-II bus.
@@ -47,7 +48,7 @@ class DiagnosisStepPreCheck extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'OBD-II Scanner Connected',
+                      context.l10n.obdScannerConnected,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -56,7 +57,7 @@ class DiagnosisStepPreCheck extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Ready to communicate with ECU bus',
+                      context.l10n.readyToCommunicateEcu,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF5B6780),
@@ -89,7 +90,7 @@ class DiagnosisStepPreCheck extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Before you start:',
+                context.l10n.beforeYouStart,
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -97,13 +98,13 @@ class DiagnosisStepPreCheck extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildCheckItem('Park car in a safe, ventilated area'),
+              _buildCheckItem(context.l10n.precheckRule1),
               const SizedBox(height: 12),
-              _buildCheckItem('Turn ignition ON (engine running or idle)'),
+              _buildCheckItem(context.l10n.precheckRule2),
               const SizedBox(height: 12),
-              _buildCheckItem('Keep device within Bluetooth range (~5m)'),
+              _buildCheckItem(context.l10n.precheckRule3),
               const SizedBox(height: 12),
-              _buildCheckItem('Do not unplug scanner during scan'),
+              _buildCheckItem(context.l10n.precheckRule4),
             ],
           ),
         ),
@@ -123,7 +124,7 @@ class DiagnosisStepPreCheck extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Start scan',
+              context.l10n.startScanButton,
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -136,7 +137,7 @@ class DiagnosisStepPreCheck extends StatelessWidget {
           child: GestureDetector(
             onTap: onWatchLiveData,
             child: Text(
-              'Watch live data only',
+              context.l10n.watchLiveDataOnly,
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

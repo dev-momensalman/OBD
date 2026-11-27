@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../injection_container.dart' as di;
 import '../../domain/entities/vehicle_entity.dart';
@@ -14,12 +15,17 @@ class MyVehiclePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl.isRegistered<VehicleCubit>()
-          ? di.sl<VehicleCubit>()
-          : VehicleCubit(),
-      child: const _MyVehicleView(),
-    );
+    try {
+      context.read<VehicleCubit>();
+      return const _MyVehicleView();
+    } catch (_) {
+      return BlocProvider(
+        create: (_) => di.sl.isRegistered<VehicleCubit>()
+            ? di.sl<VehicleCubit>()
+            : VehicleCubit(),
+        child: const _MyVehicleView(),
+      );
+    }
   }
 }
 
@@ -62,8 +68,7 @@ class _MyVehicleView extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -71,7 +76,7 @@ class _MyVehicleView extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    'My Vehicle',
+                    context.l10n.myVehicleTitle,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -200,7 +205,7 @@ class _MyVehicleView extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Current',
+                                        context.l10n.currentBadge,
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -230,7 +235,7 @@ class _MyVehicleView extends StatelessWidget {
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: Text(
-                                    'Set as current',
+                                    context.l10n.setAsCurrent,
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -255,6 +260,7 @@ class _MyVehicleView extends StatelessWidget {
                                       'mileage': vehicle.mileage,
                                       'plate': vehicle.plateNumber,
                                       'vin': vehicle.vin,
+                                      'isCurrent': vehicle.isCurrent,
                                     },
                                   );
                                 },
@@ -277,7 +283,7 @@ class _MyVehicleView extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Each vehicle keeps its own diagnostic history.',
+                              context.l10n.vehicleHistoryNotice,
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: const Color(0xFF5B6780),
@@ -305,7 +311,7 @@ class _MyVehicleView extends StatelessWidget {
                 },
                 icon: const Icon(Icons.add_rounded, size: 20),
                 label: Text(
-                  'Add Vehicle',
+                  context.l10n.addVehicleCta,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

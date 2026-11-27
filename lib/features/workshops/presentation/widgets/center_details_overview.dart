@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import '../utils/service_center_l10n.dart';
 import '../../domain/entities/service_center_entity.dart';
 
 /// Center Details Overview Sheet Content (Figma Node 434:1174)
@@ -38,7 +41,7 @@ class CenterDetailsOverview extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    center.name,
+                    ServiceCenterL10n.name(context, center.name),
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -65,7 +68,7 @@ class CenterDetailsOverview extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Compatible',
+                        context.l10n.compatibleBadge,
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -98,7 +101,7 @@ class CenterDetailsOverview extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '(${center.reviewsCount} reviews)',
+                  context.l10n.reviewsCountText(center.reviewsCount),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -118,7 +121,7 @@ class CenterDetailsOverview extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${center.distance} away',
+                  context.l10n.distanceAway(ServiceCenterL10n.distance(context, center.distance)),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -139,7 +142,7 @@ class CenterDetailsOverview extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  center.workingHours,
+                  ServiceCenterL10n.workingHours(context, center.workingHours),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -152,7 +155,7 @@ class CenterDetailsOverview extends StatelessWidget {
 
             // Specialties Section
             Text(
-              'SPECIALTIES',
+              context.l10n.specialtiesTitle,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -165,17 +168,17 @@ class CenterDetailsOverview extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildSpecialtyChip(Icons.build_rounded, 'Engine Repair'),
-                _buildSpecialtyChip(Icons.bolt_rounded, 'Electrical'),
-                _buildSpecialtyChip(Icons.disc_full_rounded, 'Brakes'),
-                _buildSpecialtyChip(Icons.ac_unit_rounded, 'AC & Climate'),
+                _buildSpecialtyChip(Icons.build_rounded, context.l10n.specialtyEngine),
+                _buildSpecialtyChip(Icons.bolt_rounded, context.l10n.specialtyElectrical),
+                _buildSpecialtyChip(Icons.disc_full_rounded, context.l10n.specialtyBrakes),
+                _buildSpecialtyChip(Icons.ac_unit_rounded, context.l10n.specialtyAc),
               ],
             ),
             const SizedBox(height: 20),
 
             // Authorized Brands Section
             Text(
-              'AUTHORIZED BRANDS',
+              context.l10n.authorizedBrandsTitle,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -232,7 +235,7 @@ class CenterDetailsOverview extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          center.address ?? '12 Tahrir St, Cairo',
+                          ServiceCenterL10n.address(context, center.address ?? '12 Tahrir St, Cairo'),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -240,7 +243,7 @@ class CenterDetailsOverview extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Downtown Automotive District',
+                          context.l10n.downtownAutomotive,
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             color: const Color(0xFF5B6780),
@@ -250,11 +253,21 @@ class CenterDetailsOverview extends StatelessWidget {
                     ),
                   ),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      final addr = ServiceCenterL10n.address(
+                        context,
+                        center.address ?? '12 Tahrir St, Cairo',
+                      );
+                      AppActions.copyText(
+                        context,
+                        addr,
+                        feedback: context.l10n.addressCopied(addr),
+                      );
+                    },
                     icon: const Icon(Icons.near_me_rounded,
                         size: 14, color: Color(0xFF0159C2)),
                     label: Text(
-                      'Directions',
+                      context.l10n.directionsButton,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -284,7 +297,7 @@ class CenterDetailsOverview extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Certified OBD-II Diagnostic Partner',
+                    context.l10n.certifiedPartner,
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/entities/diagnostic_report.dart';
 import '../../domain/entities/dtc_fault.dart';
@@ -56,7 +57,9 @@ class DiagnosisStepCompleted extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasFaults ? 'Issues Detected' : 'Vehicle Systems Healthy',
+                      hasFaults
+                          ? context.l10n.issuesDetected
+                          : context.l10n.vehicleSystemsHealthy,
                       style: GoogleFonts.inter(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -66,8 +69,8 @@ class DiagnosisStepCompleted extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       hasFaults
-                          ? '${dtcs.length} fault code(s) recorded in ECU bus'
-                          : 'All 27 sensors operating within factory tolerance',
+                          ? context.l10n.faultCodesRecorded(dtcs.length)
+                          : context.l10n.allSensorsNominal,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF475569),
@@ -102,7 +105,7 @@ class DiagnosisStepCompleted extends StatelessWidget {
         // 2. Detected DTCs Card List
         if (hasFaults) ...[
           Text(
-            'Diagnostic Trouble Codes (DTCs)',
+            context.l10n.dtcCodesSectionTitle,
             style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -125,7 +128,7 @@ class DiagnosisStepCompleted extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'No active DTC trouble codes found. Powertrain and emissions pass OBD-II inspection.',
+                    context.l10n.noActiveDtcsMessage,
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: const Color(0xFF334155),
@@ -155,7 +158,7 @@ class DiagnosisStepCompleted extends StatelessWidget {
               ),
             ),
             child: Text(
-              'View Full AI Report',
+              context.l10n.viewFullAiReport,
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -168,7 +171,11 @@ class DiagnosisStepCompleted extends StatelessWidget {
           height: 52,
           child: OutlinedButton(
             onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.serviceCentersList);
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.home,
+                (route) => false,
+                arguments: 1,
+              );
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF003FB8),
@@ -178,7 +185,7 @@ class DiagnosisStepCompleted extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Find Nearby Service Center',
+              context.l10n.findNearbyServiceCenter,
               style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -192,7 +199,7 @@ class DiagnosisStepCompleted extends StatelessWidget {
             onPressed: onRescan,
             icon: const Icon(Icons.refresh_rounded, size: 18),
             label: Text(
-              'Run Scan Again',
+              context.l10n.runScanAgain,
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

@@ -178,9 +178,9 @@ class HomeHeader extends StatelessWidget {
                         color: Color(0xFF1E293B),
                         size: 22,
                       ),
-                      Positioned(
+                      PositionedDirectional(
                         top: 8,
-                        right: 8,
+                        end: 8,
                         child: Container(
                           width: 8,
                           height: 8,

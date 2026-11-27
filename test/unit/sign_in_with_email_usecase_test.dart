@@ -1,12 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obd_vision/core/errors/failures.dart';
 import 'package:obd_vision/core/utils/result.dart';
+import 'package:obd_vision/features/auth/domain/entities/auth_session_event.dart';
 import 'package:obd_vision/features/auth/domain/entities/user_entity.dart';
 import 'package:obd_vision/features/auth/domain/repositories/i_auth_repository.dart';
 import 'package:obd_vision/features/auth/domain/usecases/sign_in_with_email_usecase.dart';
 
 class MockAuthRepo implements IAuthRepository {
   bool shouldSucceed = true;
+
+  @override
+  UserEntity? get currentUser => null;
 
   @override
   Future<Result<UserEntity, Failure>> signInWithEmailAndPassword({
@@ -21,6 +25,36 @@ class MockAuthRepo implements IAuthRepository {
   }
 
   @override
+  Future<Result<UserEntity, Failure>> signUpWithEmail({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    if (shouldSucceed) {
+      return Success(UserEntity(
+        id: '123',
+        email: email,
+        displayName: fullName,
+        phone: phone,
+        token: 'mock_token',
+      ));
+    }
+    return const Err(AuthFailure('Sign up failed'));
+  }
+
+  @override
+  Future<Result<UserEntity, Failure>> verifyEmailOtp({
+    required String email,
+    required String token,
+  }) async =>
+      Success(UserEntity(id: '123', email: email, token: 'mock_otp_token'));
+
+  @override
+  Future<Result<void, Failure>> resendSignUpOtp({required String email}) async =>
+      const Success(null);
+
+  @override
   Future<Result<UserEntity, Failure>> signInWithGoogle() async =>
       const Success(UserEntity(id: '456', email: 'g@test.com'));
 
@@ -29,10 +63,21 @@ class MockAuthRepo implements IAuthRepository {
       const Success(UserEntity(id: '789', email: 'fb@test.com'));
 
   @override
+  Future<Result<void, Failure>> requestPasswordReset({required String email}) async =>
+      shouldSucceed ? const Success(null) : const Err(AuthFailure('Email not registered'));
+
+  @override
+  Future<Result<UserEntity, Failure>> updatePassword({required String newPassword}) async =>
+      const Success(UserEntity(id: '123', email: 'test@example.com'));
+
+  @override
   Future<Result<void, Failure>> signOut() async => const Success(null);
 
   @override
   Stream<UserEntity?> get authStateChanges => Stream.value(null);
+
+  @override
+  Stream<AuthSessionEvent> get sessionEvents => const Stream.empty();
 }
 
 void main() {

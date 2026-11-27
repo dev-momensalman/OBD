@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Help & Support Page (Figma Node 325:2957)
 /// Features vehicle support online badge, direct contact CTAs (Chat & Call),
@@ -73,8 +75,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -82,7 +83,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                 ),
                 Expanded(
                   child: Text(
-                    'Help & Support',
+                    context.l10n.helpAndSupport,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -112,7 +113,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Vehicle Support',
+                            context.l10n.vehicleSupportTitle,
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -120,7 +121,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                             ),
                           ),
                           Text(
-                            'Active diagnostic assistance',
+                            context.l10n.activeDiagnosticAssist,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: const Color(0xFF64748B),
@@ -148,7 +149,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Online',
+                              context.l10n.onlineBadge,
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -187,7 +188,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Need help?',
+                                    context.l10n.needHelpTitle,
                                     style: GoogleFonts.inter(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -196,7 +197,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'We usually reply within minutes.',
+                                    context.l10n.replyWithinMinutes,
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
                                       color: const Color(0xFF64748B),
@@ -229,11 +230,17 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                               child: SizedBox(
                                 height: 48,
                                 child: ElevatedButton.icon(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    AppActions.copyText(
+                                      context,
+                                      'support@obdvision.app',
+                                      feedback: context.l10n.supportChatCopied,
+                                    );
+                                  },
                                   icon: const Icon(Icons.chat_bubble_outline_rounded,
                                       size: 18),
                                   label: Text(
-                                    'Chat with us',
+                                    context.l10n.chatWithUs,
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -255,11 +262,19 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                               child: SizedBox(
                                 height: 48,
                                 child: OutlinedButton.icon(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    const phone = '+201001234567';
+                                    AppActions.copyText(
+                                      context,
+                                      phone,
+                                      feedback:
+                                          context.l10n.callPhoneCopied(phone),
+                                    );
+                                  },
                                   icon: const Icon(Icons.phone_rounded,
                                       size: 18, color: Color(0xFF003FB8)),
                                   label: Text(
-                                    'Call us',
+                                    context.l10n.callUs,
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -285,7 +300,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
 
                   // Common Questions (FAQs)
                   Text(
-                    'Common questions',
+                    context.l10n.commonQuestions,
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -323,7 +338,17 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        faq['q']!,
+                                        switch (faq['q']) {
+                                          'How do I connect my device?' =>
+                                            context.l10n.faq1Q,
+                                          'What do the DTC fault codes mean?' =>
+                                            context.l10n.faq2Q,
+                                          'How do I book a repair workshop?' =>
+                                            context.l10n.faq3Q,
+                                          'Can I export my diagnostic reports as PDF?' =>
+                                            context.l10n.faq4Q,
+                                          _ => faq['q']!,
+                                        },
                                         style: GoogleFonts.inter(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
@@ -345,7 +370,17 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                                 child: Text(
-                                  faq['a']!,
+                                  switch (faq['a']) {
+                                    'Plug the OBD-II scanner into the 16-pin port under your dashboard, switch on your vehicle ignition, and ensure Bluetooth is enabled on your phone. The app will auto-pair within seconds.' =>
+                                      context.l10n.faq1A,
+                                    'Diagnostic Trouble Codes (DTCs) are standardized codes generated by your car’s computer. Our AI translates technical codes (e.g. P0301) into clear mechanical causes and severity ratings.' =>
+                                      context.l10n.faq2A,
+                                    'Navigate to the Workshops tab, select a certified service center near you, pick your preferred date and time slot, and confirm. Your diagnostic report will be shared automatically.' =>
+                                      context.l10n.faq3A,
+                                    'Yes, every report summary includes a Share/Export button in the top right header to instantly generate a printable summary for your mechanic.' =>
+                                      context.l10n.faq4A,
+                                    _ => faq['a']!,
+                                  },
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     height: 1.5,

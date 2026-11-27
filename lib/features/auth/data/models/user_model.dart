@@ -5,6 +5,8 @@ class UserModel extends UserEntity {
     required super.id,
     required super.email,
     super.displayName,
+    super.phone,
+    super.role = 'Customer',
     super.photoUrl,
     super.token,
   });
@@ -13,7 +15,11 @@ class UserModel extends UserEntity {
     return UserModel(
       id: json['id'] as String? ?? json['uid'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      displayName: json['displayName'] as String? ?? json['name'] as String?,
+      displayName: json['displayName'] as String? ??
+          json['full_name'] as String? ??
+          json['name'] as String?,
+      phone: json['phone'] as String?,
+      role: json['role'] as String? ?? 'Customer',
       photoUrl: json['photoUrl'] as String?,
       token: json['token'] as String?,
     );
@@ -24,6 +30,8 @@ class UserModel extends UserEntity {
       'id': id,
       'email': email,
       'displayName': displayName,
+      'phone': phone,
+      'role': role,
       'photoUrl': photoUrl,
       'token': token,
     };
@@ -34,6 +42,8 @@ class UserModel extends UserEntity {
       id: id,
       email: email,
       displayName: displayName,
+      phone: phone,
+      role: role,
       photoUrl: photoUrl,
       token: token,
     );
@@ -44,6 +54,8 @@ class UserModel extends UserEntity {
       id: entity.id,
       email: entity.email,
       displayName: entity.displayName,
+      phone: entity.phone,
+      role: entity.role,
       photoUrl: entity.photoUrl,
       token: entity.token,
     );

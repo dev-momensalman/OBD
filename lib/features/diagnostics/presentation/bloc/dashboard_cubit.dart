@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:obd_vision/core/utils/result.dart';
+import 'package:obd_vision/features/diagnostics/domain/entities/connection_status.dart';
 import 'package:obd_vision/features/diagnostics/domain/usecases/stream_live_telemetry_usecase.dart';
 import 'package:obd_vision/features/diagnostics/domain/usecases/run_diagnostic_scan_usecase.dart';
 import 'package:obd_vision/features/diagnostics/domain/usecases/get_connection_status_usecase.dart';
@@ -13,6 +14,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   
   StreamSubscription? _telemetrySub;
   StreamSubscription? _connectionSub;
+  DateTime? _sessionStartedAt;
 
   DashboardCubit({
     required StreamLiveTelemetryUseCase streamLiveTelemetryUseCase,
@@ -27,11 +29,26 @@ class DashboardCubit extends Cubit<DashboardState> {
 
   void _initStreams() {
     _connectionSub = _getConnectionStatusUseCase().listen((status) {
+      if (status == ConnectionStatus.disconnected) {
+        _sessionStartedAt = null;
+      }
       emit(state.copyWith(connectionStatus: status));
     });
 
     _telemetrySub = _streamLiveTelemetryUseCase().listen((snapshot) {
-      emit(state.copyWith(telemetry: snapshot));
+      final startedAt = _sessionStartedAt ??= snapshot.timestamp;
+      final elapsedSeconds = snapshot.timestamp.difference(startedAt).inSeconds;
+      final nextDuration =
+          elapsedSeconds > 0 ? Duration(seconds: elapsedSeconds) : Duration.zero;
+      final nextMaxSpeed = snapshot.vehicleSpeedKmH > state.maxSpeedKmH
+          ? snapshot.vehicleSpeedKmH
+          : state.maxSpeedKmH;
+
+      emit(state.copyWith(
+        telemetry: snapshot,
+        maxSpeedKmH: nextMaxSpeed,
+        sessionDuration: nextDuration,
+      ));
     });
   }
 
@@ -52,6 +69,15 @@ class DashboardCubit extends Cubit<DashboardState> {
           errorMessage: failure.message,
         ));
     }
+  }
+
+  void clearSession() {
+    _sessionStartedAt = null;
+    emit(DashboardState(
+      telemetry: state.telemetry,
+      connectionStatus: state.connectionStatus,
+      isSimulatedMode: state.isSimulatedMode,
+    ));
   }
 
   @override

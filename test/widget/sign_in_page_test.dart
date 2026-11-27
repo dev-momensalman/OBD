@@ -40,6 +40,7 @@ void main() {
     expect(find.text('Forgot password?'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('other way to sign in'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Create Account'), findsOneWidget);
 
     // Verify Agreement

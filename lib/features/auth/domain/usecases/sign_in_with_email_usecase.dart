@@ -11,23 +11,38 @@ class SignInWithEmailUseCase {
   Future<Result<UserEntity, Failure>> call({
     required String email,
     required String password,
+    bool isArabic = false,
   }) async {
-    final trimmedEmail = email.trim();
+    final trimmedEmail = email.trim().toLowerCase();
     if (trimmedEmail.isEmpty) {
-      return const Err(AuthFailure('Please enter your email address'));
+      return Err(AuthFailure(
+        isArabic
+            ? 'من فضلك أدخل البريد الإلكتروني'
+            : 'Please enter your email address',
+      ));
     }
 
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex = RegExp(r'^[\w\-.+]+@([\w-]+\.)+[\w-]{2,}$');
     if (!emailRegex.hasMatch(trimmedEmail)) {
-      return const Err(AuthFailure('Please enter a valid email address'));
+      return Err(AuthFailure(
+        isArabic
+            ? 'من فضلك أدخل بريداً إلكترونياً صحيحاً'
+            : 'Please enter a valid email address',
+      ));
     }
 
     if (password.isEmpty) {
-      return const Err(AuthFailure('Please enter your password'));
+      return Err(AuthFailure(
+        isArabic ? 'من فضلك أدخل كلمة المرور' : 'Please enter your password',
+      ));
     }
 
     if (password.length < 6) {
-      return const Err(AuthFailure('Password must be at least 6 characters'));
+      return Err(AuthFailure(
+        isArabic
+            ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
+            : 'Password must be at least 6 characters',
+      ));
     }
 
     return _repository.signInWithEmailAndPassword(

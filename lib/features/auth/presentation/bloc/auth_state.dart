@@ -28,6 +28,46 @@ final class Authenticated extends AuthState {
   List<Object?> get props => [user];
 }
 
+final class AuthConfirmationRequired extends AuthState {
+  final String email;
+  const AuthConfirmationRequired(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+final class AuthOtpResent extends AuthState {
+  final String email;
+  const AuthOtpResent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+final class AuthOAuthPending extends AuthState {
+  final String message;
+  const AuthOAuthPending(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+final class AuthResetLinkSent extends AuthState {
+  final String email;
+  const AuthResetLinkSent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+final class AuthPasswordUpdated extends AuthState {
+  final UserEntity user;
+  const AuthPasswordUpdated(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
 final class Unauthenticated extends AuthState {
   const Unauthenticated();
 }

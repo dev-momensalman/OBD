@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:obd_vision/features/diagnostics/presentation/bloc/dashboard_cubit.dart';
+import 'package:obd_vision/features/history/presentation/bloc/history_cubit.dart';
+import 'package:obd_vision/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../injection_container.dart' as di;
 import '../../domain/entities/user_profile_entity.dart';
@@ -16,6 +23,21 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ProfileCubit? existing;
+    try {
+      existing = context.read<ProfileCubit>();
+    } catch (_) {}
+
+    if (existing != null) {
+      if (existing.state is ProfileInitial) {
+        existing.fetchProfile();
+      }
+      return BlocProvider.value(
+        value: existing,
+        child: _ProfileView(onBack: onBack),
+      );
+    }
+
     return BlocProvider(
       create: (_) => di.sl<ProfileCubit>()..fetchProfile(),
       child: _ProfileView(onBack: onBack),
@@ -30,6 +52,29 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    SettingsCubit? settingsCubit;
+    try {
+      settingsCubit = context.watch<SettingsCubit>();
+    } catch (_) {
+      if (di.sl.isRegistered<SettingsCubit>()) {
+        settingsCubit = di.sl<SettingsCubit>();
+      }
+    }
+    VehicleCubit? vehicleCubit;
+    try {
+      vehicleCubit = context.watch<VehicleCubit>();
+    } catch (_) {
+      if (di.sl.isRegistered<VehicleCubit>()) {
+        vehicleCubit = di.sl<VehicleCubit>();
+      }
+    }
+
+    final currentVehicleName = vehicleCubit?.state.activeVehicle?.name;
+    final currentLanguageLabel = settingsCubit != null
+        ? (settingsCubit.state.isArabic ? l10n.arabicLabel : l10n.englishLabel)
+        : null;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: BlocBuilder<ProfileCubit, ProfileState>(
@@ -68,15 +113,15 @@ class _ProfileView extends StatelessWidget {
                     children: [
                       _buildMenuItem(
                         icon: Icons.directions_car_rounded,
-                        title: 'My vehicle',
-                        subtitle: profile?.vehicleName,
+                        title: l10n.myVehicle,
+                        subtitle: currentVehicleName ?? profile?.vehicleName,
                         onTap: () =>
                             Navigator.of(context).pushNamed(AppRoutes.myVehicle),
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
                       _buildMenuItem(
                         icon: Icons.developer_board_rounded,
-                        title: 'My device',
+                        title: l10n.myDevice,
                         subtitle: profile?.deviceSerial,
                         onTap: () =>
                             Navigator.of(context).pushNamed(AppRoutes.myDevice),
@@ -84,21 +129,21 @@ class _ProfileView extends StatelessWidget {
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
                       _buildMenuItem(
                         icon: Icons.notifications_outlined,
-                        title: 'Notifications',
+                        title: l10n.notifications,
                         onTap: () => Navigator.of(context)
                             .pushNamed(AppRoutes.notifications),
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
                       _buildMenuItem(
                         icon: Icons.help_outline_rounded,
-                        title: 'Help & Support',
+                        title: l10n.helpAndSupport,
                         onTap: () => Navigator.of(context)
                             .pushNamed(AppRoutes.helpSupport),
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
                       _buildMenuItem(
                         icon: Icons.privacy_tip_outlined,
-                        title: 'Privacy & data',
+                        title: l10n.privacyAndData,
                         onTap: () => Navigator.of(context)
                             .pushNamed(AppRoutes.privacyData),
                       ),
@@ -111,9 +156,9 @@ class _ProfileView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      'Setting',
+                      l10n.settingSection,
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -145,17 +190,40 @@ class _ProfileView extends StatelessWidget {
                     children: [
                       _buildMenuItem(
                         icon: Icons.language_rounded,
-                        title: 'Language & units',
-                        subtitle: profile?.preferredLanguage,
+                        title: l10n.languageAndUnitsMenu,
+                        subtitle:
+                            currentLanguageLabel ?? profile?.preferredLanguage,
                         onTap: () => Navigator.of(context)
                             .pushNamed(AppRoutes.languageUnits),
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
                       _buildMenuItem(
                         icon: Icons.logout_rounded,
-                        title: 'Log out',
+                        title: l10n.logOut,
                         isDestructive: true,
-                        onTap: () {
+                        onTap: () async {
+                          try {
+                            if (di.sl.isRegistered<IAuthRepository>()) {
+                              await di.sl<IAuthRepository>().signOut();
+                            }
+                            if (di.sl.isRegistered<AppPreferences>()) {
+                              await di.sl<AppPreferences>()
+                                  .clearUserSessionData();
+                            }
+                          } catch (_) {}
+                          if (!context.mounted) return;
+                          try {
+                            context.read<ProfileCubit>().clearSession();
+                          } catch (_) {}
+                          try {
+                            context.read<VehicleCubit>().resetForLogout();
+                          } catch (_) {}
+                          try {
+                            context.read<HistoryCubit>().clearSession();
+                          } catch (_) {}
+                          try {
+                            context.read<DashboardCubit>().clearSession();
+                          } catch (_) {}
                           Navigator.of(context).pushNamedAndRemoveUntil(
                             AppRoutes.signIn,
                             (route) => false,
@@ -177,8 +245,9 @@ class _ProfileView extends StatelessWidget {
 
   Widget _buildProfileHeader(BuildContext context, UserProfileEntity? profile,
       {bool isLoading = false}) {
+    final l10n = context.l10n;
     final username =
-        profile?.username ?? (isLoading ? 'Loading...' : 'momen salman');
+        profile?.username ?? (isLoading ? l10n.loadingLabel : 'momen salman');
 
     return Container(
       width: double.infinity,
@@ -202,7 +271,7 @@ class _ProfileView extends StatelessWidget {
         children: [
           Center(
             child: Text(
-              'Profile',
+              l10n.profileTitle,
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -233,8 +302,8 @@ class _ProfileView extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-                  Positioned(
-                    right: 0,
+                  PositionedDirectional(
+                    end: 0,
                     bottom: 0,
                     child: Container(
                       width: 20,
@@ -286,15 +355,15 @@ class _ProfileView extends StatelessWidget {
                                 size: 12, color: Color(0xFF003FB8)),
                             const SizedBox(width: 4),
                             Text(
-                              'Edit profile',
+                              l10n.editProfile,
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF003FB8),
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded,
-                                size: 14, color: Color(0xFF003FB8)),
+                            Icon(context.forwardChevronIcon,
+                                size: 14, color: const Color(0xFF003FB8)),
                           ],
                         ),
                       ),
@@ -352,8 +421,7 @@ class _ProfileView extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
+            RtlForwardChevron(
               size: 20,
               color: isDestructive
                   ? const Color(0xFFDC2626)

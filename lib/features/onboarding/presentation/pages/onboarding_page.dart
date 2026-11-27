@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import 'package:obd_vision/core/constants/app_assets.dart';
 import 'package:obd_vision/core/constants/app_routes.dart';
 import 'package:obd_vision/core/services/app_preferences.dart';
@@ -240,13 +241,24 @@ class _OnboardingPageState extends State<OnboardingPage>
                               SizedBox(height: 38.0 * scale),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: OnboardingTitle(title: page.title, scale: scale),
+                                child: OnboardingTitle(
+                                  title: [
+                                    context.l10n.onboarding1Title,
+                                    context.l10n.onboarding2Title,
+                                    context.l10n.onboarding3Title,
+                                  ][index],
+                                  scale: scale,
+                                ),
                               ),
                               SizedBox(height: 17.0 * scale),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Text(
-                                  page.description,
+                                  [
+                                    context.l10n.onboarding1Desc,
+                                    context.l10n.onboarding2Desc,
+                                    context.l10n.onboarding3Desc,
+                                  ][index],
                                   style: GoogleFonts.inter(
                                     fontSize: (16.0 * scale).clamp(14.0, 16.0),
                                     fontWeight: FontWeight.w500,

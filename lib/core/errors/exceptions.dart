@@ -22,3 +22,20 @@ class DeviceBusyException implements Exception {
   @override
   String toString() => 'DeviceBusyException: $message';
 }
+
+class ServerException implements Exception {
+  final String message;
+  final int? statusCode;
+  const ServerException(this.message, {this.statusCode});
+
+  @override
+  String toString() => 'ServerException($statusCode): $message';
+}
+
+class NetworkTimeoutException implements Exception {
+  final String message;
+  const NetworkTimeoutException(this.message);
+
+  @override
+  String toString() => 'NetworkTimeoutException: $message';
+}

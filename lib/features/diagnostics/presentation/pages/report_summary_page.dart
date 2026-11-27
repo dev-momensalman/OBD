@@ -1,32 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_routes.dart';
+import 'package:obd_vision/core/constants/app_routes.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/history/domain/entities/activity_log_entity.dart';
+import '../../domain/entities/diagnostic_report.dart';
+import '../../domain/entities/dtc_fault.dart';
+import '../../domain/entities/measured_evidence.dart';
+import '../bloc/dashboard_cubit.dart';
 
 /// Authentic Diagnostic Report Summary Screen matching Figma Node 247:553
+/// Reads live [DiagnosticReport] from [DashboardCubit] when available and enforces
+/// Epistemic Safety boundaries (`RULES.md` §2.3) + BiDi text direction.
 class ReportSummaryPage extends StatefulWidget {
-  const ReportSummaryPage({super.key});
+  final DiagnosticReport? reportArg;
+  final ActivityLogEntity? historyLog;
+
+  const ReportSummaryPage({super.key, this.reportArg, this.historyLog});
 
   @override
   State<ReportSummaryPage> createState() => _ReportSummaryPageState();
 }
 
 class _ReportSummaryPageState extends State<ReportSummaryPage> {
-  int _selectedTab = 0; // 0: Summary, 1: Causes
+  final int _selectedTab = 0; // 0: Summary, 1: Causes
+
+  DiagnosticReport? _readReport(BuildContext context) {
+    if (widget.reportArg != null) return widget.reportArg;
+    final log = widget.historyLog;
+    if (log != null) {
+      return DiagnosticReport(
+        id: log.id,
+        timestamp: DateTime.now(),
+        dtcs: log.detectedDtcs
+            .map(
+              (c) => DtcFault(
+                code: c,
+                description: log.title,
+                system: 'Powertrain',
+                severity: log.isWarning ? DtcSeverity.warning : DtcSeverity.healthy,
+              ),
+            )
+            .toList(),
+        measuredEvidence: MeasuredEvidence(
+          detectedDtcs: const [],
+          coolantTempC: 92,
+          batteryVoltage: 13.8,
+          engineRpm: 780,
+          measuredAt: DateTime.now(),
+        ),
+        overallSeverity: log.isWarning ? DtcSeverity.warning : DtcSeverity.healthy,
+        vehicleHealthScore: log.healthScore,
+        plainLanguageExplanation: log.subtitle,
+        rankedCauses: const [],
+        recommendedNextAction: log.title,
+        confidenceScore: 0.85,
+        minCostUsd: 0,
+        maxCostUsd: 0,
+      );
+    }
+    try {
+      return context.watch<DashboardCubit>().state.latestReport;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final report = _readReport(context);
+
+    final headline = (report != null && report.dtcs.isNotEmpty)
+        ? report.dtcs.map((d) => '${d.code} · ${d.description}').join('\n')
+        : l10n.possibleEngineMisfire;
+    final explanation =
+        report?.plainLanguageExplanation ?? l10n.fallbackExplanation;
+    final nextStep = report?.recommendedNextAction ?? l10n.fallbackNextStep;
+    final safetyWarning = report?.safetyWarning;
+    final disclaimer = report?.safetyDisclaimer ?? l10n.srsDisclaimer;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF0F172A), size: 20),
+          icon: Icon(context.backIcon,
+              color: const Color(0xFF0F172A), size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Report',
+          l10n.reportTitle,
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -38,7 +104,15 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
           IconButton(
             icon: const Icon(Icons.share_outlined,
                 color: Color(0xFF0F172A), size: 22),
-            onPressed: () {},
+            onPressed: () {
+              final text =
+                  '${l10n.reportTitle}\n$headline\n\n$explanation\n\n$nextStep\n\n$disclaimer';
+              AppActions.copyText(
+                context,
+                text,
+                feedback: l10n.reportCopiedMsg,
+              );
+            },
           ),
         ],
       ),
@@ -61,25 +135,22 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
               child: Row(
                 children: [
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedTab = 0),
-                      child: Container(
-                        decoration: BoxDecoration(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: _selectedTab == 0
+                            ? const Color(0xFF7C3AED)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        l10n.summaryTab,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
                           color: _selectedTab == 0
-                              ? const Color(0xFF7C3AED)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Summary',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: _selectedTab == 0
-                                ? Colors.white
-                                : const Color(0xFF6B21A8),
-                          ),
+                              ? Colors.white
+                              : const Color(0xFF6B21A8),
                         ),
                       ),
                     ),
@@ -87,24 +158,23 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.of(context).pushReplacementNamed(AppRoutes.reportCauses);
+                        Navigator.of(context).pushReplacementNamed(
+                          AppRoutes.reportCauses,
+                          arguments: widget.reportArg ?? widget.historyLog,
+                        );
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: _selectedTab == 1
-                              ? const Color(0xFF7C3AED)
-                              : Colors.transparent,
+                          color: Colors.transparent,
                           borderRadius: BorderRadius.circular(100),
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'Causes',
+                          l10n.causesTab,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: _selectedTab == 1
-                                ? Colors.white
-                                : const Color(0xFF6B21A8),
+                            color: const Color(0xFF6B21A8),
                           ),
                         ),
                       ),
@@ -133,31 +203,48 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Row: Chip + Timestamp
+                  // Header Row: Inference Badge + Timestamp
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Suspected fault',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF475569),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.auto_awesome_rounded,
+                                  size: 12, color: Color(0xFF4338CA)),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  l10n.aiInferenceBadge,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF3730A3),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
-                        'Today, 9:40',
+                        report != null
+                            ? '${report.vehicleHealthScore}/100'
+                            : l10n.todayDefaultTime,
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: const Color(0xFF64748B),
                         ),
                       ),
@@ -166,9 +253,10 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                   const SizedBox(height: 12),
 
                   Text(
-                    'Possible engine misfire',
+                    headline,
+                    textDirection: detectTextDirection(headline),
                     style: GoogleFonts.inter(
-                      fontSize: 20,
+                      fontSize: 19,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF002264),
                     ),
@@ -183,7 +271,7 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      'Check soon',
+                      report?.diagnosisSource ?? l10n.checkSoonBadge,
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -194,7 +282,7 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                   const SizedBox(height: 18),
 
                   Text(
-                    "What's happening",
+                    l10n.whatsHappening,
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -203,17 +291,55 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Your engine may not be burning fuel properly in one cylinder. This can cause shaking and higher fuel use.',
+                    explanation,
+                    textDirection: detectTextDirection(explanation),
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      height: 1.45,
+                      height: 1.5,
                       color: const Color(0xFF334155),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                  // Next best step card with ticket cutout
+                  if (safetyWarning != null && safetyWarning.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.safetyWarningTitle,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFB91C1C),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            safetyWarning,
+                            textDirection: detectTextDirection(safetyWarning),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: const Color(0xFF991B1B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Next best step card
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
@@ -224,7 +350,7 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Next best step',
+                          l10n.nextBestStep,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -233,33 +359,65 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Check the spark plugs and ignition coil',
+                          nextStep,
+                          textDirection: detectTextDirection(nextStep),
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
+                            height: 1.45,
                             color: const Color(0xFF0F172A),
                           ),
                         ),
-                        Text(
-                          'These are the most common causes of this code',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: const Color(0xFF64748B),
+                        if (report == null)
+                          Text(
+                            l10n.commonCausesHint,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: const Color(0xFF64748B),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
+
+            // Mandatory SRS Legal / Epistemic Safety Disclaimer (RULES.md)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded,
+                      size: 16, color: Color(0xFF64748B)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      disclaimer,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        height: 1.4,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
 
             // 3. Action Buttons
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pushReplacementNamed(
+                Navigator.of(context).pushNamedAndRemoveUntil(
                   AppRoutes.home,
+                  (route) => false,
                   arguments: 1, // Service Centers tab index
                 );
               },
@@ -272,7 +430,7 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                 elevation: 3,
               ),
               child: Text(
-                'Find service center',
+                l10n.findServiceCenter,
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -292,7 +450,7 @@ class _ReportSummaryPageState extends State<ReportSummaryPage> {
                 ),
               ),
               child: Text(
-                'Done',
+                l10n.doneButton,
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,

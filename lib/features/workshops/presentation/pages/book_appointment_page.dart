@@ -1,5 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
+import 'package:obd_vision/injection_container.dart' as di;
+import '../utils/service_center_l10n.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/entities/service_center_entity.dart';
 import '../widgets/calendar_strip_picker.dart';
@@ -87,8 +94,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -96,7 +102,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                 ),
                 Expanded(
                   child: Text(
-                    'Book Appointment',
+                    context.l10n.bookAppointmentTitle,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -147,7 +153,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                center.name,
+                                ServiceCenterL10n.name(context, center.name),
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -155,7 +161,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                                 ),
                               ),
                               Text(
-                                '${center.distance} away · ${center.address ?? 'Cairo'}',
+                                '${context.l10n.distanceAway(ServiceCenterL10n.distance(context, center.distance))} · ${ServiceCenterL10n.address(context, center.address ?? 'Cairo')}',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   color: const Color(0xFF64748B),
@@ -171,7 +177,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
 
                   // Section 1: Dynamic Date Strip Picker
                   Text(
-                    'SELECT DATE',
+                    context.l10n.selectDateTitle,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -191,7 +197,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
 
                   // Section 2: Time Slots Grid
                   Text(
-                    'SELECT TIME',
+                    context.l10n.selectTimeTitle,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -236,7 +242,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Share Diagnostic Report',
+                                context.l10n.shareDiagnosticReport,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -244,7 +250,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                                 ),
                               ),
                               Text(
-                                'Includes recent DTCs & engine health status',
+                                context.l10n.includesRecentDtcs,
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   color: const Color(0xFF64748B),
@@ -271,7 +277,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                     maxLines: 2,
                     decoration: InputDecoration(
                       hintText:
-                          'Add a note (e.g. check engine light on, strange noise)...',
+                          context.l10n.addBookingNoteHint,
                       hintStyle: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFFA9B4C7),
@@ -313,7 +319,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Booking Summary',
+                      context.l10n.bookingSummaryLabel,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF64748B),
@@ -335,11 +341,45 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {
+                      String? activeVehicleName;
+                      String? activeVehiclePlate;
+                      try {
+                        final v = context.read<VehicleCubit>().state.activeVehicle;
+                        activeVehicleName = v?.name;
+                        activeVehiclePlate = v?.plateNumber;
+                      } catch (_) {
+                        if (di.sl.isRegistered<VehicleCubit>()) {
+                          final v = di.sl<VehicleCubit>().state.activeVehicle;
+                          activeVehicleName = v?.name;
+                          activeVehiclePlate = v?.plateNumber;
+                        }
+                      }
+                      final schedule = '$selectedDateStr · $_selectedTime';
+                      if (di.sl.isRegistered<AppPreferences>()) {
+                        di.sl<AppPreferences>().setSavedActiveBookingJson(
+                              jsonEncode({
+                                'centerId': center.id,
+                                'centerName': center.name,
+                                'distance': center.distance,
+                                'rating': center.rating,
+                                'reviewsCount': center.reviewsCount,
+                                'workingHours': center.workingHours,
+                                'isOpen': center.isOpen,
+                                'tags': center.tags,
+                                'address': center.address,
+                                'phoneNumber': center.phoneNumber,
+                                'schedule': schedule,
+                                'vehicleName': activeVehicleName ?? 'Corolla 2018',
+                              }),
+                            );
+                      }
                       Navigator.of(context).pushNamed(
                         AppRoutes.bookingConfirm,
                         arguments: {
                           'center': center,
-                          'schedule': '$selectedDateStr · $_selectedTime',
+                          'schedule': schedule,
+                          'vehicleName': activeVehicleName,
+                          'vehiclePlate': activeVehiclePlate,
                         },
                       );
                     },
@@ -352,7 +392,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                       ),
                     ),
                     child: Text(
-                      'Confirm Appointment',
+                      context.l10n.confirmAppointmentButton,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import '../bloc/profile_cubit.dart';
+import '../bloc/profile_state.dart';
 
 /// Edit Profile Page (Figma Node 325:2104)
 /// Provides complete profile information management with input validation,
@@ -18,6 +22,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _emailController = TextEditingController(text: 'momensalman.dev@gmail.com');
   String _selectedGender = 'Male';
   DateTime? _selectedBirthday = DateTime(2001, 5, 26);
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      final profileState = context.read<ProfileCubit>().state;
+      if (profileState is ProfileLoaded) {
+        final parts = profileState.profile.displayName.trim().split(' ');
+        if (parts.isNotEmpty && parts.first.isNotEmpty) {
+          _firstNameController.text = parts.first;
+          _lastNameController.text =
+              parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+        if (profileState.profile.email.isNotEmpty) {
+          _emailController.text = profileState.profile.email;
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -68,8 +91,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
+                        child: const RtlBackIcon(
                           color: Colors.white,
                           size: 18,
                         ),
@@ -77,7 +99,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     Expanded(
                       child: Text(
-                        'Edit profile',
+                        context.l10n.editProfile,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           fontSize: 20,
@@ -92,10 +114,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
 
               // Centered Avatar positioned at the bottom curve (Figma Node 325:2107)
-              Positioned(
+              PositionedDirectional(
                 bottom: -40,
-                left: 0,
-                right: 0,
+                start: 0,
+                end: 0,
                 child: Center(
                   child: Stack(
                     children: [
@@ -121,8 +143,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           color: Color(0xFF64748B),
                         ),
                       ),
-                      Positioned(
-                        right: 0,
+                      PositionedDirectional(
+                        end: 0,
                         bottom: 0,
                         child: Container(
                           width: 26,
@@ -158,23 +180,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // First Name
-                  _buildLabel('First Name', isRequired: true),
+                  _buildLabel(context.l10n.firstNameLabel, isRequired: true),
                   _buildTextField(
                     controller: _firstNameController,
-                    hint: 'First name',
+                    hint: context.l10n.firstNameHint,
                   ),
                   const SizedBox(height: 16),
 
                   // Last Name
-                  _buildLabel('Last Name', isRequired: true),
+                  _buildLabel(context.l10n.lastNameLabel, isRequired: true),
                   _buildTextField(
                     controller: _lastNameController,
-                    hint: 'Last name',
+                    hint: context.l10n.lastNameHint,
                   ),
                   const SizedBox(height: 16),
 
                   // Phone Number
-                  _buildLabel('Phone Number', isRequired: true),
+                  _buildLabel(context.l10n.phoneNumberLabel, isRequired: true),
                   Container(
                     height: 48,
                     decoration: BoxDecoration(
@@ -225,16 +247,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   const SizedBox(height: 16),
 
                   // Email
-                  _buildLabel('Email', isRequired: true),
+                  _buildLabel(context.l10n.emailLabel, isRequired: true),
                   _buildTextField(
                     controller: _emailController,
-                    hint: 'Email',
+                    hint: context.l10n.emailLabel,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
 
                   // Gender Dropdown
-                  _buildLabel('Gender', isRequired: false),
+                  _buildLabel(context.l10n.genderLabel, isRequired: false),
                   Container(
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -247,19 +269,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: DropdownButton<String>(
                         value: _selectedGender,
                         isExpanded: true,
-                        icon: const Icon(Icons.arrow_forward_ios_rounded,
-                            size: 14, color: Color(0xFF989898)),
+                        icon: Icon(context.forwardChevronIcon,
+                            size: 16, color: const Color(0xFF989898)),
                         items: ['Male', 'Female', 'Prefer not to say']
-                            .map((gender) => DropdownMenuItem(
-                                  value: gender,
-                                  child: Text(
-                                    gender,
-                                    style: GoogleFonts.workSans(
-                                      fontSize: 14,
-                                      color: const Color(0xFF090909),
-                                    ),
+                            .map((gender) {
+                              final label = switch (gender) {
+                                'Male' => context.l10n.genderMale,
+                                'Female' => context.l10n.genderFemale,
+                                _ => context.l10n.genderPreferNot,
+                              };
+                              return DropdownMenuItem(
+                                value: gender,
+                                child: Text(
+                                  label,
+                                  style: GoogleFonts.workSans(
+                                    fontSize: 14,
+                                    color: const Color(0xFF090909),
                                   ),
-                                ))
+                                ),
+                              );
+                            })
                             .toList(),
                         onChanged: (val) {
                           if (val != null) setState(() => _selectedGender = val);
@@ -270,7 +299,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   const SizedBox(height: 16),
 
                   // Birthday Field
-                  _buildLabel('Birthday', isRequired: false),
+                  _buildLabel(context.l10n.birthdayLabel, isRequired: false),
                   GestureDetector(
                     onTap: () async {
                       final picked = await showDatePicker(
@@ -305,8 +334,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   : const Color(0xFF989898),
                             ),
                           ),
-                          const Icon(Icons.arrow_forward_ios_rounded,
-                              size: 14, color: Color(0xFF989898)),
+                          Icon(context.forwardChevronIcon,
+                              size: 16, color: const Color(0xFF989898)),
                         ],
                       ),
                     ),
@@ -320,10 +349,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     height: 54,
                     child: ElevatedButton(
                       onPressed: () {
+                        final l10n = context.l10n;
+                        try {
+                          context.read<ProfileCubit>().updateProfile(
+                                firstName: _firstNameController.text,
+                                lastName: _lastNameController.text,
+                                email: _emailController.text,
+                              );
+                        } catch (_) {}
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Profile updated successfully',
+                              l10n.profileUpdatedSuccess,
                               style: GoogleFonts.inter(),
                             ),
                             backgroundColor: const Color(0xFF003FB8),
@@ -340,7 +377,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                       ),
                       child: Text(
-                        'Save',
+                        context.l10n.saveButton,
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -363,7 +400,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'All data will be encrypted',
+                          context.l10n.allDataEncrypted,
                           style: GoogleFonts.workSans(
                             fontSize: 12,
                             color: const Color(0xFF989898),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:obd_vision/features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:obd_vision/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_cubit.dart';
 import '../../features/auth/presentation/pages/auth_success_page.dart';
@@ -7,9 +9,12 @@ import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/product_activation_page.dart';
 import '../../features/auth/presentation/pages/sign_in_page.dart';
 import '../../features/auth/presentation/pages/sign_up_page.dart';
+import '../../features/diagnostics/domain/entities/diagnostic_report.dart';
+import '../../features/diagnostics/presentation/pages/cockpit_hud_page.dart';
 import '../../features/diagnostics/presentation/pages/live_data_page.dart';
 import '../../features/diagnostics/presentation/pages/report_causes_page.dart';
 import '../../features/diagnostics/presentation/pages/report_summary_page.dart';
+import '../../features/history/domain/entities/activity_log_entity.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/vehicle/presentation/pages/add_vehicle_page.dart';
@@ -36,6 +41,17 @@ class AppRouter {
   AppRouter._();
 
   static void navigateAfterSplash(BuildContext context) {
+    final currentUser = di.sl.isRegistered<IAuthRepository>()
+        ? di.sl<IAuthRepository>().currentUser
+        : null;
+    final isGuest = di.sl.isRegistered<AppPreferences>()
+        ? di.sl<AppPreferences>().isGuestSession
+        : false;
+    if (currentUser != null || isGuest) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      return;
+    }
+
     final hasSeenOnboarding = di.sl.isRegistered<AppPreferences>()
         ? di.sl<AppPreferences>().hasSeenOnboarding
         : false;
@@ -44,8 +60,7 @@ class AppRouter {
   }
 
   static Map<String, WidgetBuilder> get routes => {
-        // --- 1. Splash & Onboarding ---
-        AppRoutes.splash: (_) => const SplashPage(),
+        // --- 1. Onboarding ---
         AppRoutes.onboarding: (_) => OnboardingPage(
               preferences: di.sl.isRegistered<AppPreferences>()
                   ? di.sl<AppPreferences>()
@@ -57,11 +72,27 @@ class AppRouter {
               create: (_) => di.sl<AuthCubit>(),
               child: const SignInPage(),
             ),
-        AppRoutes.signUp: (_) => const SignUpPage(),
-        AppRoutes.forgotPassword: (_) => const ForgotPasswordPage(),
+        AppRoutes.signUp: (_) => BlocProvider(
+              create: (_) => di.sl<AuthCubit>(),
+              child: const SignUpPage(),
+            ),
+        AppRoutes.forgotPassword: (_) => BlocProvider(
+              create: (_) => di.sl<AuthCubit>(),
+              child: const ForgotPasswordPage(),
+            ),
+        AppRoutes.resetPassword: (_) => BlocProvider(
+              create: (_) => di.sl<AuthCubit>(),
+              child: const ResetPasswordPage(),
+            ),
         AppRoutes.otpVerification: (context) {
           final email = ModalRoute.of(context)?.settings.arguments as String? ??
               'example123@gmail.com';
+          if (di.sl.isRegistered<AuthCubit>()) {
+            return BlocProvider(
+              create: (_) => di.sl<AuthCubit>(),
+              child: OtpVerificationPage(email: email),
+            );
+          }
           return OtpVerificationPage(email: email);
         },
         AppRoutes.authSuccess: (_) => const AuthSuccessPage(),
@@ -69,6 +100,7 @@ class AppRouter {
 
         // --- 3. Core Shell & Main Navigation Tabs ---
         AppRoutes.home: (_) => const HomePage(initialIndex: 0),
+        AppRoutes.cockpitHud: (_) => const CockpitHudPage(),
         AppRoutes.serviceCentersList: (_) => const HomePage(initialIndex: 1),
         AppRoutes.preCheck: (_) => const HomePage(initialIndex: 2),
         AppRoutes.scan: (_) => const HomePage(initialIndex: 2),
@@ -76,8 +108,20 @@ class AppRouter {
         AppRoutes.profile: (_) => const HomePage(initialIndex: 4),
 
         // --- 4. Sub-Screens & Dedicated Flow Views ---
-        AppRoutes.reportSummary: (_) => const ReportSummaryPage(),
-        AppRoutes.reportCauses: (_) => const ReportCausesPage(),
+        AppRoutes.reportSummary: (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          return ReportSummaryPage(
+            reportArg: args is DiagnosticReport ? args : null,
+            historyLog: args is ActivityLogEntity ? args : null,
+          );
+        },
+        AppRoutes.reportCauses: (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          return ReportCausesPage(
+            reportArg: args is DiagnosticReport ? args : null,
+            historyLog: args is ActivityLogEntity ? args : null,
+          );
+        },
         AppRoutes.liveData: (_) => const LiveDataPage(),
 
         // --- 5. Workshops Flow ---
@@ -94,6 +138,8 @@ class AppRouter {
           return BookingConfirmPage(
             center: args?['center'] as ServiceCenterEntity?,
             schedule: args?['schedule'] as String?,
+            vehicleName: args?['vehicleName'] as String?,
+            vehiclePlate: args?['vehiclePlate'] as String?,
           );
         },
         AppRoutes.serviceCentersMap: (_) => const HomePage(initialIndex: 1),
@@ -101,7 +147,11 @@ class AppRouter {
         // --- 6. Vehicle Management & Profile Sub-screens ---
         AppRoutes.myVehicle: (_) => const MyVehiclePage(),
         AppRoutes.addVehicle: (_) => const AddVehiclePage(),
-        AppRoutes.editVehicle: (_) => const EditVehiclePage(),
+        AppRoutes.editVehicle: (context) {
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+          return EditVehiclePage(initialVehicle: args);
+        },
         AppRoutes.myDevice: (_) => const MyDevicePage(),
         AppRoutes.notifications: (_) => const NotificationsPage(),
         AppRoutes.helpSupport: (_) => const HelpSupportPage(),

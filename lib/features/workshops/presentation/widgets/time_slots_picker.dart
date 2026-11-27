@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Time Slots Selection Grid for Appointments (Figma Node 435:2041)
 class TimeSlotsPicker extends StatelessWidget {
@@ -28,12 +29,13 @@ class TimeSlotsPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Morning Subheader
         Text(
-          'MORNING',
+          l10n.morningSection,
           style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.bold,
@@ -50,7 +52,11 @@ class TimeSlotsPicker extends StatelessWidget {
           children: morningSlots.map((time) {
             return GestureDetector(
               onTap: () => onSelectTime(time),
-              child: _buildTimeChip(time, isSelected: selectedTime == time),
+              child: _buildTimeChip(
+                context,
+                time,
+                isSelected: selectedTime == time,
+              ),
             );
           }).toList(),
         ),
@@ -58,7 +64,7 @@ class TimeSlotsPicker extends StatelessWidget {
 
         // Afternoon Subheader
         Text(
-          'AFTERNOON',
+          l10n.afternoonSection,
           style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.bold,
@@ -75,11 +81,15 @@ class TimeSlotsPicker extends StatelessWidget {
           children: afternoonSlots.map((time) {
             final isTaken = time == '1:00 PM';
             if (isTaken) {
-              return _buildTakenSlot(time);
+              return _buildTakenSlot(context, time);
             }
             return GestureDetector(
               onTap: () => onSelectTime(time),
-              child: _buildTimeChip(time, isSelected: selectedTime == time),
+              child: _buildTimeChip(
+                context,
+                time,
+                isSelected: selectedTime == time,
+              ),
             );
           }).toList(),
         ),
@@ -87,7 +97,18 @@ class TimeSlotsPicker extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeChip(String time, {required bool isSelected}) {
+  String _formatTimeDisplay(BuildContext context, String raw) {
+    final l10n = context.l10n;
+    return raw
+        .replaceAll('AM', l10n.amSuffix)
+        .replaceAll('PM', l10n.pmSuffix);
+  }
+
+  Widget _buildTimeChip(
+    BuildContext context,
+    String time, {
+    required bool isSelected,
+  }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -108,7 +129,7 @@ class TimeSlotsPicker extends StatelessWidget {
             : null,
       ),
       child: Text(
-        time,
+        _formatTimeDisplay(context, time),
         style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -118,7 +139,7 @@ class TimeSlotsPicker extends StatelessWidget {
     );
   }
 
-  Widget _buildTakenSlot(String time) {
+  Widget _buildTakenSlot(BuildContext context, String time) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
@@ -127,7 +148,7 @@ class TimeSlotsPicker extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Text(
-        '$time (Taken)',
+        context.l10n.takenSlot(_formatTimeDisplay(context, time)),
         style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w500,

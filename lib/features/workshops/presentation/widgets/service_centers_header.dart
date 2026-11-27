@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 
 /// Top Curved Blue Header for Service Centers (Figma Node 404:3383)
@@ -32,14 +33,14 @@ class ServiceCentersHeader extends StatelessWidget {
         children: [
           if (onBack != null)
             IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              icon: Icon(context.backIcon,
                   color: Colors.white, size: 20),
               onPressed: onBack,
             )
           else
             const SizedBox(width: 40),
           Text(
-            'Service Centers',
+            context.l10n.serviceCentersTitle,
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -64,8 +65,8 @@ class ServiceCentersHeader extends StatelessWidget {
                     Navigator.of(context).pushNamed(AppRoutes.notifications);
                   },
                 ),
-                Positioned(
-                  right: 10,
+                PositionedDirectional(
+                  end: 10,
                   top: 10,
                   child: Container(
                     width: 8,

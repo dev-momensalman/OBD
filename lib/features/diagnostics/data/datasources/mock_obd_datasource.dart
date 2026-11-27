@@ -28,7 +28,10 @@ class MockObdDataSource {
   double _load = 20.0;
   int _ticks = 0;
   bool _shouldFailNextScan = false;
-  bool _enableFluctuation = false;
+  bool _enableFluctuation;
+
+  MockObdDataSource({bool enableFluctuation = false})
+      : _enableFluctuation = enableFluctuation;
 
   Stream<TelemetrySnapshotModel> get telemetryStream => _telemetryController.stream;
 
@@ -60,12 +63,16 @@ class MockObdDataSource {
         _speed = 0.0;
         _load = 20.0;
       } else {
-        final throttleCycle = sin(_ticks * 0.05);
-        _rpm = 780.0 + (throttleCycle.abs() * 2800.0) + (_random.nextDouble() * 50 - 25);
-        _speed = (throttleCycle.abs() * 95.0) + (_random.nextDouble() * 4 - 2);
-        _load = 18.0 + (throttleCycle.abs() * 55.0);
-        _voltage = 13.8 + (_random.nextDouble() * 0.3 - 0.15);
-        _coolant = 96.0 + sin(_ticks * 0.01) * 2.0;
+        // Smooth temporary driving demo wave (~4s ramp up, ~4s coast down) for UI preview.
+        final wave = 0.5 - 0.5 * cos((_ticks - 1) * 0.08);
+        final pulse = 0.5 - 0.5 * cos((_ticks - 1) * 0.03);
+        final blended = (wave * 0.85) + (pulse * 0.15);
+
+        _rpm = 820.0 + (blended * 4650.0) + (_random.nextDouble() * 80 - 40);
+        _speed = (blended * 145.0) + (_random.nextDouble() * 3 - 1.5);
+        _load = 18.0 + (blended * 64.0) + (_random.nextDouble() * 4 - 2);
+        _voltage = 13.7 + (_random.nextDouble() * 0.6 - 0.2);
+        _coolant = 90.0 + (blended * 11.0) + (_random.nextDouble() * 0.4 - 0.2);
       }
 
       _telemetryController.add(TelemetrySnapshotModel(

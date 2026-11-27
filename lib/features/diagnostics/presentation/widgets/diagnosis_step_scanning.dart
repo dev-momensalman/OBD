@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Active Diagnostic Scanning View (Figma Node 189:1790)
 /// Step 2: Animated circular scan progress with real-time ECU subsystem audit checklist.
@@ -50,7 +51,7 @@ class DiagnosisStepScanning extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Scanning ECU',
+                      context.l10n.scanningEcu,
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: const Color(0xFF64748B),
@@ -83,26 +84,27 @@ class DiagnosisStepScanning extends StatelessWidget {
           child: Column(
             children: [
               _buildProgressRow(
-                'Reading trouble codes',
+                context.l10n.readingTroubleCodes,
                 isDone: progress > 0.35,
                 isLoading: progress <= 0.35,
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               _buildProgressRow(
-                'Reading live sensors',
-                subtitle: '${(progress * 27).toInt()} of 27 PIDs queried',
+                context.l10n.readingLiveSensors,
+                subtitle: context.l10n
+                    .pidsQueriedProgress((progress * 27).toInt().clamp(0, 27)),
                 isDone: progress > 0.70,
                 isLoading: progress > 0.35 && progress <= 0.70,
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               _buildProgressRow(
-                'AI RuleEngine Diagnostic Evaluation',
+                context.l10n.aiRuleEngineEval,
                 isDone: progress > 0.90,
                 isLoading: progress > 0.70 && progress <= 0.90,
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               _buildProgressRow(
-                'Synthesizing diagnostic report',
+                context.l10n.synthesizingReport,
                 isDone: progress >= 1.0,
                 isLoading: progress > 0.90,
               ),
@@ -113,7 +115,7 @@ class DiagnosisStepScanning extends StatelessWidget {
 
         Center(
           child: Text(
-            'Keep ignition on and stay within OBD Bluetooth range',
+            context.l10n.keepIgnitionRange,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 12,
@@ -137,7 +139,7 @@ class DiagnosisStepScanning extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Cancel scan',
+              context.l10n.cancelScanButton,
               style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/entities/service_center_entity.dart';
 
@@ -139,8 +140,8 @@ class ServiceCentersMapView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded,
-                          size: 14, color: Color(0xFF003FB8)),
+                      Icon(context.forwardChevronIcon,
+                          size: 16, color: const Color(0xFF003FB8)),
                     ],
                   ),
                 ),

@@ -12,6 +12,8 @@ class DashboardState extends Equatable {
   final ScanStatus scanStatus;
   final DiagnosticReport? latestReport;
   final String? errorMessage;
+  final double maxSpeedKmH;
+  final Duration sessionDuration;
 
   const DashboardState({
     this.telemetry,
@@ -20,6 +22,8 @@ class DashboardState extends Equatable {
     this.scanStatus = ScanStatus.idle,
     this.latestReport,
     this.errorMessage,
+    this.maxSpeedKmH = 0.0,
+    this.sessionDuration = Duration.zero,
   });
 
   bool get isConnected => connectionStatus == ConnectionStatus.connected;
@@ -31,6 +35,8 @@ class DashboardState extends Equatable {
     ScanStatus? scanStatus,
     DiagnosticReport? latestReport,
     String? errorMessage,
+    double? maxSpeedKmH,
+    Duration? sessionDuration,
   }) {
     return DashboardState(
       telemetry: telemetry ?? this.telemetry,
@@ -39,6 +45,8 @@ class DashboardState extends Equatable {
       scanStatus: scanStatus ?? this.scanStatus,
       latestReport: latestReport ?? this.latestReport,
       errorMessage: errorMessage ?? this.errorMessage,
+      maxSpeedKmH: maxSpeedKmH ?? this.maxSpeedKmH,
+      sessionDuration: sessionDuration ?? this.sessionDuration,
     );
   }
 
@@ -50,5 +58,7 @@ class DashboardState extends Equatable {
         scanStatus,
         latestReport,
         errorMessage,
+        maxSpeedKmH,
+        sessionDuration,
       ];
 }

@@ -1,16 +1,56 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 import '../../../../core/constants/app_routes.dart';
+import '../../domain/entities/service_center_entity.dart';
+import '../utils/service_center_l10n.dart';
 
 /// Active Repair Progress Banner (Figma Node 404:3388)
 class ServiceRepairTrackerCard extends StatelessWidget {
   const ServiceRepairTrackerCard({super.key});
 
+  Map<String, dynamic>? _readActiveBooking() {
+    if (!di.sl.isRegistered<AppPreferences>()) return null;
+    final raw = di.sl<AppPreferences>().savedActiveBookingJson;
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final booking = _readActiveBooking();
+    final center = ServiceCenterEntity(
+      id: booking?['centerId'] as String? ?? 'sc-1',
+      name: booking?['centerName'] as String? ?? 'Al-Nour Service Center',
+      distance: booking?['distance'] as String? ?? '1.2 km',
+      rating: (booking?['rating'] as num?)?.toDouble() ?? 4.7,
+      reviewsCount: booking?['reviewsCount'] as int? ?? 230,
+      workingHours: booking?['workingHours'] as String? ?? 'Open until 8 PM',
+      isOpen: booking?['isOpen'] as bool? ?? true,
+      tags: (booking?['tags'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const ['Engine', 'Electrical', 'Compatible'],
+      address: booking?['address'] as String? ?? 'Plot 14, Auto District, Cairo',
+      phoneNumber: booking?['phoneNumber'] as String? ?? '+201001234567',
+    );
+    final scheduleSub = booking == null
+        ? context.l10n.readyThursdaySub
+        : '${ServiceCenterL10n.name(context, center.name)} · ${booking['schedule']}';
+
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed(AppRoutes.centerDetails);
+        Navigator.of(context).pushNamed(
+          AppRoutes.centerDetails,
+          arguments: center,
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -49,7 +89,7 @@ class ServiceRepairTrackerCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'Repair in progress',
+                        context.l10n.repairInProgress,
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -66,7 +106,7 @@ class ServiceRepairTrackerCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: Text(
-                          'Active',
+                          context.l10n.activeTag,
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -78,7 +118,7 @@ class ServiceRepairTrackerCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Al-Nour Service · Ready Thursday',
+                    scheduleSub,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -88,7 +128,7 @@ class ServiceRepairTrackerCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+            const RtlForwardChevron(color: Color(0xFF94A3B8)),
           ],
         ),
       ),

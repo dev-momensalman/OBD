@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import '../utils/service_center_l10n.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/entities/service_center_entity.dart';
 import '../widgets/center_details_overview.dart';
@@ -49,7 +52,7 @@ class _CenterDetailsPageState extends State<CenterDetailsPage> {
                 CenterPhotoHeader(
                   activePhotoIndex: _activePhotoIndex,
                   onPageChanged: (idx) => setState(() => _activePhotoIndex = idx),
-                  centerName: center.name,
+                  centerName: ServiceCenterL10n.name(context, center.name),
                 ),
 
                 // Main Content Overview Card
@@ -66,7 +69,7 @@ class _CenterDetailsPageState extends State<CenterDetailsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildGlassCircleButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
+                    icon: context.backIcon,
                     onTap: () => Navigator.of(context).pop(),
                   ),
                   Row(
@@ -87,7 +90,13 @@ class _CenterDetailsPageState extends State<CenterDetailsPage> {
                       const SizedBox(width: 8),
                       _buildGlassCircleButton(
                         icon: Icons.share_rounded,
-                        onTap: () {},
+                        onTap: () {
+                          final info =
+                              '${ServiceCenterL10n.name(context, center.name)}\n'
+                              '${ServiceCenterL10n.address(context, center.address ?? 'Cairo')}\n'
+                              '${center.phoneNumber ?? '+201001234567'}';
+                          AppActions.copyText(context, info);
+                        },
                       ),
                     ],
                   ),
@@ -134,7 +143,14 @@ class _CenterDetailsPageState extends State<CenterDetailsPage> {
                     child: IconButton(
                       icon: const Icon(Icons.phone_rounded,
                           color: Color(0xFF003FB8)),
-                      onPressed: () {},
+                      onPressed: () {
+                        final phone = center.phoneNumber ?? '+201001234567';
+                        AppActions.copyText(
+                          context,
+                          phone,
+                          feedback: context.l10n.callPhoneCopied(phone),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -159,7 +175,7 @@ class _CenterDetailsPageState extends State<CenterDetailsPage> {
                           ),
                         ),
                         child: Text(
-                          'Book appointment',
+                          context.l10n.bookAppointmentButton,
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

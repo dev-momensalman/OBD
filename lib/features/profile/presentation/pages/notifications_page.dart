@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 
 /// Notifications Preferences Page (Figma Node 325:2609)
 /// Allows user to toggle granular alerts: early warnings, diagnostic reports,
@@ -17,6 +21,37 @@ class _NotificationsPageState extends State<NotificationsPage> {
   bool _bookingUpdates = true;
   bool _quoteApprovals = true;
   bool _deviceStatus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSaved();
+  }
+
+  void _loadSaved() {
+    if (!di.sl.isRegistered<AppPreferences>()) return;
+    final raw = di.sl<AppPreferences>().savedNotificationsJson;
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      _earlyWarnings = map['earlyWarnings'] as bool? ?? true;
+      _diagnosticReports = map['diagnosticReports'] as bool? ?? true;
+      _bookingUpdates = map['bookingUpdates'] as bool? ?? true;
+      _quoteApprovals = map['quoteApprovals'] as bool? ?? true;
+      _deviceStatus = map['deviceStatus'] as bool? ?? false;
+    } catch (_) {}
+  }
+
+  void _persist() {
+    if (!di.sl.isRegistered<AppPreferences>()) return;
+    di.sl<AppPreferences>().setSavedNotificationsJson(jsonEncode({
+      'earlyWarnings': _earlyWarnings,
+      'diagnosticReports': _diagnosticReports,
+      'bookingUpdates': _bookingUpdates,
+      'quoteApprovals': _quoteApprovals,
+      'deviceStatus': _deviceStatus,
+    }));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +89,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -63,7 +97,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 ),
                 Expanded(
                   child: Text(
-                    'Notifications',
+                    context.l10n.notifications,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -100,44 +134,54 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     child: Column(
                       children: [
                         _buildSwitchRow(
-                          title: 'Early warnings',
-                          subtitle: 'When we notice unusual vehicle behavior',
+                          title: context.l10n.earlyWarningsTitle,
+                          subtitle: context.l10n.earlyWarningsSub,
                           value: _earlyWarnings,
-                          onChanged: (val) =>
-                              setState(() => _earlyWarnings = val),
+                          onChanged: (val) {
+                            setState(() => _earlyWarnings = val);
+                            _persist();
+                          },
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildSwitchRow(
-                          title: 'Diagnostic reports',
-                          subtitle: 'When your AI analysis report is ready',
+                          title: context.l10n.diagnosticReportsTitle,
+                          subtitle: context.l10n.diagnosticReportsSub,
                           value: _diagnosticReports,
-                          onChanged: (val) =>
-                              setState(() => _diagnosticReports = val),
+                          onChanged: (val) {
+                            setState(() => _diagnosticReports = val);
+                            _persist();
+                          },
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildSwitchRow(
-                          title: 'Booking updates',
-                          subtitle: 'Status changes from your service centers',
+                          title: context.l10n.bookingUpdatesTitle,
+                          subtitle: context.l10n.bookingUpdatesSub,
                           value: _bookingUpdates,
-                          onChanged: (val) =>
-                              setState(() => _bookingUpdates = val),
+                          onChanged: (val) {
+                            setState(() => _bookingUpdates = val);
+                            _persist();
+                          },
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildSwitchRow(
-                          title: 'Quote approvals',
-                          subtitle: 'When a revised quote needs your review',
+                          title: context.l10n.quoteApprovalsTitle,
+                          subtitle: context.l10n.quoteApprovalsSub,
                           value: _quoteApprovals,
-                          onChanged: (val) =>
-                              setState(() => _quoteApprovals = val),
+                          onChanged: (val) {
+                            setState(() => _quoteApprovals = val);
+                            _persist();
+                          },
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildSwitchRow(
-                          title: 'Device status',
+                          title: context.l10n.deviceStatusTitle,
                           subtitle:
-                              'When your scanner disconnects or connects',
+                              context.l10n.deviceStatusSub,
                           value: _deviceStatus,
-                          onChanged: (val) =>
-                              setState(() => _deviceStatus = val),
+                          onChanged: (val) {
+                            setState(() => _deviceStatus = val);
+                            _persist();
+                          },
                         ),
                       ],
                     ),
@@ -155,7 +199,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Critical safety warnings cannot be disabled.',
+                          context.l10n.criticalWarningsNote,
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: const Color(0xFF5B6780),

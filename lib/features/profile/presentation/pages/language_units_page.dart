@@ -1,249 +1,269 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:obd_vision/features/settings/presentation/bloc/settings_state.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 
 /// Language & Units Settings Screen (Figma Node 336:3792)
-/// Allows user to toggle display language and measurement units (Distance & Temp).
-class LanguageUnitsPage extends StatefulWidget {
+/// Allows user to toggle display language (`en`/`ar`) and measurement units (`km`/`mi`, `°C`/`°F`).
+class LanguageUnitsPage extends StatelessWidget {
   const LanguageUnitsPage({super.key});
 
   @override
-  State<LanguageUnitsPage> createState() => _LanguageUnitsPageState();
+  Widget build(BuildContext context) {
+    try {
+      context.read<SettingsCubit>();
+      return const _LanguageUnitsView();
+    } catch (_) {
+      return BlocProvider<SettingsCubit>(
+        create: (_) => di.sl.isRegistered<SettingsCubit>()
+            ? di.sl<SettingsCubit>()
+            : SettingsCubit(),
+        child: const _LanguageUnitsView(),
+      );
+    }
+  }
 }
 
-class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
-  String _selectedLanguage = 'en'; // 'en' | 'ar'
-  String _distanceUnit = 'km'; // 'km' | 'mi'
-  String _tempUnit = '°C'; // '°C' | '°F'
+class _LanguageUnitsView extends StatelessWidget {
+  const _LanguageUnitsView();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // 1. Curved Dark Blue Header (Figma Node 336:3793)
-          Container(
-            height: 124,
-            width: double.infinity,
-            padding: const EdgeInsets.only(top: 44, left: 16, right: 16),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF000C24),
-                  Color(0xFF002F8A),
-                ],
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(32),
-              ),
-            ),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Language & Units',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 40),
-              ],
-            ),
-          ),
+    final l10n = context.l10n;
 
-          // 2. Settings Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- SECTION 1: Language ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Language',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1F2A44),
-                        ),
-                      ),
-                      Text(
-                        'System default',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF727784),
-                        ),
-                      ),
+    return BlocBuilder<SettingsCubit, SettingsState>(
+      builder: (context, state) {
+        final cubit = context.read<SettingsCubit>();
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              // 1. Curved Dark Blue Header (Figma Node 336:3793)
+              Container(
+                height: 124,
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 44, left: 16, right: 16),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF000C24),
+                      Color(0xFF002F8A),
                     ],
                   ),
-                  const SizedBox(height: 8),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFD9E2F0)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // English Row
-                        _buildRadioRow(
-                          icon: Icons.language_rounded,
-                          title: 'English',
-                          subtitle: 'Default interface translation',
-                          isSelected: _selectedLanguage == 'en',
-                          onTap: () => setState(() => _selectedLanguage = 'en'),
-                        ),
-                        const Divider(height: 1, color: Color(0xFFE8EEFF)),
-                        // Arabic Row
-                        _buildRadioRow(
-                          icon: Icons.translate_rounded,
-                          title: 'العربية',
-                          pillTag: 'Arabic',
-                          subtitle: 'RTL layout optimized',
-                          isSelected: _selectedLanguage == 'ar',
-                          onTap: () => setState(() => _selectedLanguage = 'ar'),
-                        ),
-                      ],
-                    ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(32),
                   ),
+                ),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          context.backIcon,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        l10n.languageAndUnits,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+              ),
 
-                  const SizedBox(height: 28),
-
-                  // --- SECTION 2: Units of Measurement ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // 2. Settings Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Units of Measurement',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1F2A44),
-                        ),
-                      ),
-                      Text(
-                        'Telemetry sync',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF727784),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFD9E2F0)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Distance Row
-                        _buildSegmentedRow(
-                          icon: Icons.speed_rounded,
-                          title: 'Distance',
-                          subtitle: 'Odometer & range',
-                          optionA: 'km',
-                          optionB: 'mi',
-                          selectedValue: _distanceUnit,
-                          onChanged: (val) => setState(() => _distanceUnit = val),
-                        ),
-                        const Divider(height: 1, color: Color(0xFFE8EEFF)),
-                        // Temperature Row
-                        _buildSegmentedRow(
-                          icon: Icons.thermostat_rounded,
-                          title: 'Temperature',
-                          subtitle: 'Coolant, oil & cabin',
-                          optionA: '°C',
-                          optionB: '°F',
-                          selectedValue: _tempUnit,
-                          onChanged: (val) => setState(() => _tempUnit = val),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // Live Reassurance Note (Figma Node 336:3970)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.sync_rounded,
-                          size: 16,
-                          color: Color(0xFF003FB8),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            'Changes apply automatically across all connected vehicles',
-                            textAlign: TextAlign.center,
+                      // --- SECTION 1: Language ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            l10n.languageSection,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1F2A44),
+                            ),
+                          ),
+                          Text(
+                            l10n.systemDefault,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF424753),
+                              color: const Color(0xFF727784),
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFD9E2F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          children: [
+                            _buildRadioRow(
+                              icon: Icons.language_rounded,
+                              title: l10n.englishLabel,
+                              subtitle: l10n.englishSubtitle,
+                              isSelected: state.languageCode == 'en',
+                              onTap: () => cubit.setLanguage('en'),
+                            ),
+                            const Divider(height: 1, color: Color(0xFFE8EEFF)),
+                            _buildRadioRow(
+                              icon: Icons.translate_rounded,
+                              title: l10n.arabicLabel,
+                              pillTag: l10n.arabicPill,
+                              subtitle: l10n.arabicSubtitle,
+                              isSelected: state.languageCode == 'ar',
+                              onTap: () => cubit.setLanguage('ar'),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // --- SECTION 2: Units of Measurement ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            l10n.unitsOfMeasurement,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1F2A44),
+                            ),
+                          ),
+                          Text(
+                            l10n.telemetrySync,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF727784),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFD9E2F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            _buildSegmentedRow(
+                              icon: Icons.speed_rounded,
+                              title: l10n.distanceTitle,
+                              subtitle: l10n.distanceSubtitle,
+                              optionA: 'km',
+                              optionB: 'mi',
+                              selectedValue: state.distanceUnit,
+                              onChanged: cubit.setDistanceUnit,
+                            ),
+                            const Divider(height: 1, color: Color(0xFFE8EEFF)),
+                            _buildSegmentedRow(
+                              icon: Icons.thermostat_rounded,
+                              title: l10n.temperatureTitle,
+                              subtitle: l10n.temperatureSubtitle,
+                              optionA: '°C',
+                              optionB: '°F',
+                              selectedValue: state.tempUnit,
+                              onChanged: cubit.setTempUnit,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Live Reassurance Note (Figma Node 336:3970)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.sync_rounded,
+                              size: 16,
+                              color: Color(0xFF003FB8),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                l10n.unitsReassuranceNote,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF424753),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -264,8 +284,8 @@ class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
             Container(
               width: 36,
               height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F3FF),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F3FF),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: const Color(0xFF003FB8), size: 18),
@@ -318,7 +338,6 @@ class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
                 ],
               ),
             ),
-            // Custom Radio Circle matching Figma
             Container(
               width: 22,
               height: 22,
@@ -358,8 +377,8 @@ class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F3FF),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F3FF),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: const Color(0xFF003FB8), size: 18),
@@ -389,7 +408,6 @@ class _LanguageUnitsPageState extends State<LanguageUnitsPage> {
               ],
             ),
           ),
-          // Segmented Pill
           Container(
             height: 36,
             width: 110,

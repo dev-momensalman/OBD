@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/vehicle/domain/entities/vehicle_entity.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
 
 /// Add Vehicle Page (Figma Node 446:4069)
 /// Allows user to input vehicle name, nickname, energy source, mileage with unit toggle [km|mi],
@@ -66,8 +70,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -75,7 +78,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 ),
                 Expanded(
                   child: Text(
-                    'Add vehicle',
+                    context.l10n.addVehicleTitle,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -98,34 +101,34 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Field 1: Vehicle Name
-                  _buildLabel('Vehicle Name'),
+                  _buildLabel(context.l10n.vehicleNameLabel),
                   const SizedBox(height: 6),
                   _buildTextField(
                     controller: _nameController,
-                    hintText: 'e.g. Corolla 2018',
+                    hintText: context.l10n.vehicleNameHint,
                   ),
                   const SizedBox(height: 18),
 
                   // Field 2: Nickname
-                  _buildLabel('Nickname'),
+                  _buildLabel(context.l10n.nicknameLabel),
                   const SizedBox(height: 6),
                   _buildTextField(
                     controller: _nicknameController,
-                    hintText: 'e.g. My daily car',
+                    hintText: context.l10n.nicknameHint,
                   ),
                   const SizedBox(height: 18),
 
                   // Field 3: Energy Source
-                  _buildLabel('Energy source'),
+                  _buildLabel(context.l10n.energySourceLabel),
                   const SizedBox(height: 6),
                   _buildTextField(
                     controller: _energyController,
-                    hintText: 'Petrol / Hybrid / Electric',
+                    hintText: context.l10n.energySourceHint,
                   ),
                   const SizedBox(height: 18),
 
                   // Field 4: Mileage with Unit Toggle Pill
-                  _buildLabel('Mileage'),
+                  _buildLabel(context.l10n.mileageLabel),
                   const SizedBox(height: 6),
                   Container(
                     height: 56,
@@ -178,7 +181,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'VIN (optional)',
+                        context.l10n.vinOptionalLabel,
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -219,7 +222,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                             ),
                             decoration: InputDecoration(
                               counterText: '',
-                              hintText: 'ENTER 17-CHARACTER VIN',
+                              hintText: context.l10n.vinHint,
                               hintStyle: GoogleFonts.inter(
                                 fontSize: 13,
                                 color: const Color(0xFF94A3B8),
@@ -233,7 +236,28 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                         IconButton(
                           icon: const Icon(Icons.qr_code_scanner_rounded,
                               size: 20, color: Color(0xFF003FB8)),
-                          onPressed: () {},
+                          onPressed: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (dlgCtx) => AlertDialog(
+                                title: Text(context.l10n.vinHelperTitle),
+                                content: Text(context.l10n.vinHelper),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dlgCtx).pop(),
+                                    child: Text(context.l10n.cancelButton),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      _vinController.text = 'JTDBR32E820194821';
+                                      Navigator.of(dlgCtx).pop();
+                                    },
+                                    child: Text(context.l10n.fillSampleVin),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -244,11 +268,13 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                       const Icon(Icons.info_outline_rounded,
                           size: 13, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),
-                      Text(
-                        '17 characters. Helps us match your exact vehicle model',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: const Color(0xFF64748B),
+                      Expanded(
+                        child: Text(
+                          context.l10n.vinHelper,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                          ),
                         ),
                       ),
                     ],
@@ -266,6 +292,42 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
               height: 54,
               child: ElevatedButton(
                 onPressed: () {
+                  final rawName = _nameController.text.trim();
+                  if (rawName.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(context.l10n.enterVehicleNameError)),
+                    );
+                    return;
+                  }
+                  final parts = rawName.split(' ');
+                  final brand = parts.first;
+                  final modelYear = RegExp(r'\d{4}').firstMatch(rawName)?.group(0) ??
+                      DateTime.now().year.toString();
+                  final mileageText = _mileageController.text.trim().isEmpty
+                      ? '0 $_distanceUnit'
+                      : '${_mileageController.text.trim()} $_distanceUnit';
+
+                  final entity = VehicleEntity(
+                    id: 'veh_${DateTime.now().millisecondsSinceEpoch}',
+                    name: rawName,
+                    nickname: _nicknameController.text.trim().isEmpty
+                        ? rawName
+                        : _nicknameController.text.trim(),
+                    brand: brand,
+                    modelYear: modelYear,
+                    fuelType: _energyController.text.trim().isEmpty
+                        ? 'Petrol'
+                        : _energyController.text.trim(),
+                    mileage: mileageText,
+                    plateNumber: 'NEW',
+                    vin: _vinController.text.trim().isEmpty
+                        ? 'PENDINGVIN0000000'
+                        : _vinController.text.trim().toUpperCase(),
+                  );
+
+                  try {
+                    context.read<VehicleCubit>().addVehicle(entity);
+                  } catch (_) {}
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
@@ -277,7 +339,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   ),
                 ),
                 child: Text(
-                  'Add vehicle',
+                  context.l10n.addVehicleTitle,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

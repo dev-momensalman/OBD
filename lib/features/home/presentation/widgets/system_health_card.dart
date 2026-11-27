@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// System Health & Alert Card matching Figma Node 274:983
 /// Features dynamic 86 Health score ring, early warning tag, and Run diagnosis action.
@@ -31,7 +32,7 @@ class SystemHealthCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'System Health & Alert',
+                context.l10n.systemHealthAndAlert,
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -42,7 +43,7 @@ class SystemHealthCard extends StatelessWidget {
               GestureDetector(
                 onTap: onSeeDetails,
                 child: Text(
-                  'See Details',
+                  context.l10n.seeDetails,
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -108,7 +109,7 @@ class SystemHealthCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Early Warning',
+                                context.l10n.earlyWarning,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -120,31 +121,58 @@ class SystemHealthCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
 
-                        // Title with Red alert text
-                        Text.rich(
-                          TextSpan(
+                        // Title with Red alert text (dynamic warningTitle or localized default)
+                        Builder(builder: (context) {
+                          final effectiveTitle =
+                              warningTitle == 'Coolant temperature\ntrending high'
+                                  ? context.l10n.defaultWarningTitle
+                                  : warningTitle;
+                          final lines = effectiveTitle.split('\n');
+                          if (lines.length >= 2) {
+                            return Text.rich(
+                              TextSpan(
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.25,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '${lines.first}\n',
+                                    style: const TextStyle(color: Color(0xFF1E293B)),
+                                  ),
+                                  TextSpan(
+                                    text: lines.sublist(1).join('\n'),
+                                    style: const TextStyle(color: Color(0xFFE11D48)),
+                                  ),
+                                ],
+                              ),
+                              textDirection: detectTextDirection(effectiveTitle),
+                            );
+                          }
+                          return Text(
+                            effectiveTitle,
+                            textDirection: detectTextDirection(effectiveTitle),
                             style: GoogleFonts.inter(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                               height: 1.25,
+                              color: const Color(0xFF1E293B),
                             ),
-                            children: const [
-                              TextSpan(
-                                text: 'Coolant temperature\n',
-                                style: TextStyle(color: Color(0xFF1E293B)),
-                              ),
-                              TextSpan(
-                                text: 'trending high',
-                                style: TextStyle(color: Color(0xFFE11D48)),
-                              ),
-                            ],
-                          ),
-                        ),
+                          );
+                        }),
                         const SizedBox(height: 6),
 
                         // Subtitle
                         Text(
-                          warningSubtitle,
+                          warningSubtitle == 'Last scan today, 09:40 · Inspect sensor'
+                              ? context.l10n.defaultWarningSubtitle
+                              : warningSubtitle,
+                          textDirection: detectTextDirection(
+                            warningSubtitle == 'Last scan today, 09:40 · Inspect sensor'
+                                ? context.l10n.defaultWarningSubtitle
+                                : warningSubtitle,
+                          ),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -178,7 +206,7 @@ class SystemHealthCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Run diagnosis',
+                                  context.l10n.runDiagnosisHome,
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -241,7 +269,7 @@ class SystemHealthCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'HEALTH',
+                              context.l10n.healthScoreBadge,
                               style: GoogleFonts.inter(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,

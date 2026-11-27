@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/vehicle/domain/entities/vehicle_entity.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
 
 /// Edit Vehicle Page (Figma Node 325:2164)
 /// Enables editing vehicle nickname, mileage, energy source, and deleting vehicle.
@@ -84,8 +88,10 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: Icon(
+                      context.isArabic
+                          ? Icons.arrow_forward_ios_rounded
+                          : Icons.arrow_back_ios_new_rounded,
                       color: Colors.white,
                       size: 18,
                     ),
@@ -93,7 +99,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                 ),
                 Expanded(
                   child: Text(
-                    'Edit vehicle',
+                    context.l10n.editVehicleTitle,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -116,25 +122,25 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Vehicle Name
-                  _buildLabel('Vehicle Name'),
+                  _buildLabel(context.l10n.vehicleNameLabel),
                   const SizedBox(height: 6),
                   _buildTextField(controller: _nameController),
                   const SizedBox(height: 18),
 
                   // Nickname
-                  _buildLabel('Nickname'),
+                  _buildLabel(context.l10n.nicknameLabel),
                   const SizedBox(height: 6),
                   _buildTextField(controller: _nicknameController),
                   const SizedBox(height: 18),
 
                   // Energy Source
-                  _buildLabel('Energy source'),
+                  _buildLabel(context.l10n.energySourceLabel),
                   const SizedBox(height: 6),
                   _buildTextField(controller: _energyController),
                   const SizedBox(height: 18),
 
                   // Mileage with Unit Toggle Pill
-                  _buildLabel('Mileage'),
+                  _buildLabel(context.l10n.mileageLabel),
                   const SizedBox(height: 6),
                   Container(
                     height: 56,
@@ -177,7 +183,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                   const SizedBox(height: 18),
 
                   // VIN
-                  _buildLabel('VIN'),
+                  _buildLabel(context.l10n.vinLabel),
                   const SizedBox(height: 6),
                   Container(
                     height: 56,
@@ -216,12 +222,16 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                   Center(
                     child: TextButton.icon(
                       onPressed: () {
+                        final id = widget.initialVehicle?['id'] as String? ?? 'veh_01';
+                        try {
+                          context.read<VehicleCubit>().deleteVehicle(id);
+                        } catch (_) {}
                         Navigator.of(context).pop();
                       },
                       icon: const Icon(Icons.delete_outline_rounded,
                           color: Color(0xFFDC2626), size: 18),
                       label: Text(
-                        'Delete vehicle',
+                        context.l10n.deleteVehicle,
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -243,6 +253,34 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
               height: 54,
               child: ElevatedButton(
                 onPressed: () {
+                  final id = widget.initialVehicle?['id'] as String? ?? 'veh_01';
+                  final name = _nameController.text.trim();
+                  if (name.isNotEmpty) {
+                    final mileageRaw = _mileageController.text.trim();
+                    final updated = VehicleEntity(
+                      id: id,
+                      name: name,
+                      nickname: _nicknameController.text.trim().isEmpty
+                          ? name
+                          : _nicknameController.text.trim(),
+                      brand: widget.initialVehicle?['brand'] as String? ??
+                          name.split(' ').first,
+                      modelYear: RegExp(r'\d{4}').firstMatch(name)?.group(0) ??
+                          '2018',
+                      fuelType: _energyController.text.trim(),
+                      mileage: mileageRaw.contains('km') || mileageRaw.contains('mi')
+                          ? mileageRaw
+                          : '$mileageRaw $_distanceUnit',
+                      plateNumber:
+                          widget.initialVehicle?['plate'] as String? ?? '4821 KSA',
+                      vin: _vinController.text.trim().toUpperCase(),
+                      isCurrent:
+                          widget.initialVehicle?['isCurrent'] as bool? ?? true,
+                    );
+                    try {
+                      context.read<VehicleCubit>().updateVehicle(updated);
+                    } catch (_) {}
+                  }
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
@@ -254,7 +292,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                   ),
                 ),
                 child: Text(
-                  'Save changes',
+                  context.l10n.saveChanges,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

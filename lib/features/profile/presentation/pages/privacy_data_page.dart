@@ -1,5 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/constants/app_routes.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:obd_vision/features/diagnostics/presentation/bloc/dashboard_cubit.dart';
+import 'package:obd_vision/features/history/presentation/bloc/history_cubit.dart';
+import 'package:obd_vision/features/profile/presentation/bloc/profile_cubit.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 
 /// Privacy & Data Policy Screen (Figma Node 325:3324)
 /// Provides links to Privacy Policy, Terms of Use, Data Export, and Account Deletion,
@@ -43,8 +55,7 @@ class PrivacyDataPage extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                    child: const RtlBackIcon(
                       color: Colors.white,
                       size: 18,
                     ),
@@ -52,7 +63,7 @@ class PrivacyDataPage extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    'Privacy & data',
+                    context.l10n.privacyAndData,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 20,
@@ -90,25 +101,48 @@ class PrivacyDataPage extends StatelessWidget {
                       children: [
                         _buildRow(
                           icon: Icons.policy_rounded,
-                          title: 'Privacy policy',
-                          onTap: () {},
+                          title: context.l10n.privacyPolicyItem,
+                          onTap: () => AppActions.showLegalSheet(
+                            context,
+                            isPrivacyPolicy: true,
+                          ),
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildRow(
                           icon: Icons.article_rounded,
-                          title: 'Terms of use',
-                          onTap: () {},
+                          title: context.l10n.termsOfUseItem,
+                          onTap: () => AppActions.showLegalSheet(
+                            context,
+                            isPrivacyPolicy: false,
+                          ),
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildRow(
                           icon: Icons.download_rounded,
-                          title: 'Download my data',
-                          onTap: () {},
+                          title: context.l10n.downloadMyData,
+                          onTap: () {
+                            final prefs = di.sl.isRegistered<AppPreferences>()
+                                ? di.sl<AppPreferences>()
+                                : null;
+                            final payload = jsonEncode({
+                              'language': prefs?.languageCode ?? 'en',
+                              'distanceUnit': prefs?.distanceUnit ?? 'km',
+                              'tempUnit': prefs?.tempUnit ?? '°C',
+                              'profile': prefs?.savedProfileJson,
+                              'vehicles': prefs?.savedVehiclesJson,
+                              'historyLogs': prefs?.savedHistoryLogsJson,
+                            });
+                            AppActions.copyText(
+                              context,
+                              payload,
+                              feedback: context.l10n.dataExportedMsg,
+                            );
+                          },
                         ),
                         const Divider(height: 1, color: Color(0xFFE8EEFF)),
                         _buildRow(
                           icon: Icons.delete_forever_rounded,
-                          title: 'Delete account',
+                          title: context.l10n.deleteAccountItem,
                           isDestructive: true,
                           badge: Container(
                             padding: const EdgeInsets.symmetric(
@@ -119,7 +153,7 @@ class PrivacyDataPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(9999),
                             ),
                             child: Text(
-                              'Permanent',
+                              context.l10n.permanentBadge,
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -127,7 +161,55 @@ class PrivacyDataPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          onTap: () {},
+                          onTap: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (dlgCtx) => AlertDialog(
+                                title: Text(context.l10n.confirmDeleteAccountTitle),
+                                content: Text(context.l10n.confirmDeleteAccountBody),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dlgCtx).pop(),
+                                    child: Text(context.l10n.cancelButton),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFDC2626),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    onPressed: () async {
+                                      Navigator.of(dlgCtx).pop();
+                                      if (di.sl.isRegistered<IAuthRepository>()) {
+                                        await di.sl<IAuthRepository>().signOut();
+                                      }
+                                      if (di.sl.isRegistered<AppPreferences>()) {
+                                        await di.sl<AppPreferences>()
+                                            .clearUserSessionData();
+                                      }
+                                      if (!context.mounted) return;
+                                      try {
+                                        context.read<ProfileCubit>().clearSession();
+                                      } catch (_) {}
+                                      try {
+                                        context.read<VehicleCubit>().resetForLogout();
+                                      } catch (_) {}
+                                      try {
+                                        context.read<HistoryCubit>().clearSession();
+                                      } catch (_) {}
+                                      try {
+                                        context.read<DashboardCubit>().clearSession();
+                                      } catch (_) {}
+                                      Navigator.of(context).pushNamedAndRemoveUntil(
+                                        AppRoutes.signIn,
+                                        (route) => false,
+                                      );
+                                    },
+                                    child: Text(context.l10n.confirmButton),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -153,7 +235,7 @@ class PrivacyDataPage extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'End-to-end encrypted · GDPR ready',
+                            context.l10n.gdprEncryptedBadge,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -221,8 +303,7 @@ class PrivacyDataPage extends StatelessWidget {
               badge,
               const SizedBox(width: 8),
             ],
-            Icon(
-              Icons.chevron_right_rounded,
+            RtlForwardChevron(
               color: isDestructive
                   ? const Color(0xFFD00416)
                   : const Color(0xFF94A3B8),

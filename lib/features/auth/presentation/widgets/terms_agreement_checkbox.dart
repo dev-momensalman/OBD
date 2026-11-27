@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Terms Agreement Checkbox matching Figma Node 77:235:
 /// "I’ve read and agreed to User Agreement and Privacy Policy"
@@ -19,6 +20,7 @@ class TermsAgreementCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -59,12 +61,12 @@ class TermsAgreementCheckbox extends StatelessWidget {
                 height: 1.35,
               ),
               children: [
-                const TextSpan(text: 'I’ve read and agreed to '),
+                TextSpan(text: l10n.agreePrefix),
                 WidgetSpan(
                   child: GestureDetector(
                     onTap: onUserAgreementTap,
                     child: Text(
-                      'User Agreement',
+                      l10n.userAgreement,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -75,12 +77,12 @@ class TermsAgreementCheckbox extends StatelessWidget {
                     ),
                   ),
                 ),
-                const TextSpan(text: ' and '),
+                TextSpan(text: l10n.andWord),
                 WidgetSpan(
                   child: GestureDetector(
                     onTap: onPrivacyPolicyTap,
                     child: Text(
-                      'Privacy Policy',
+                      l10n.privacyPolicy,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -99,3 +101,4 @@ class TermsAgreementCheckbox extends StatelessWidget {
     );
   }
 }
+

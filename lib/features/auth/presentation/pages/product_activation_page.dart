@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/injection_container.dart' as di;
 import '../../../../core/constants/app_routes.dart';
 
 /// Authentic Product Activation Page matching Figma Node 118:74
@@ -42,8 +45,12 @@ class _ProductActivationPageState extends State<ProductActivationPage>
     final serial = _serialController.text.trim();
 
     if (serial.isEmpty || serial.replaceAll(' ', '').length < 8) {
-      setState(() => _errorMessage = 'Please enter a valid 14-digit serial number');
+      setState(() => _errorMessage = context.l10n.serialNumberInvalidError);
       return;
+    }
+
+    if (di.sl.isRegistered<AppPreferences>()) {
+      di.sl<AppPreferences>().setActivatedSerial(serial);
     }
 
     // Success -> Navigate to home
@@ -61,8 +68,8 @@ class _ProductActivationPageState extends State<ProductActivationPage>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF0F172A), size: 20),
+          icon: Icon(context.backIcon,
+              color: const Color(0xFF0F172A), size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -76,7 +83,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
               // 1. Headline
               Center(
                 child: Text(
-                  'Activate your product',
+                  context.l10n.activateProductTitle,
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -88,7 +95,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
 
               Center(
                 child: Text(
-                  "Let's get started now",
+                  context.l10n.letsGetStarted,
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -100,7 +107,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
 
               // 2. Stepper Indicator: 1 ── 2 ── 3 (SETUP - 1 OF 3)
               Text(
-                'SETUP - 1 OF 3',
+                context.l10n.setupStep1,
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -124,7 +131,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
 
               // 3. Instruction
               Text(
-                'Scan the QR code on your product to securely connect it to your account',
+                context.l10n.scanQrInstruction,
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   height: 1.4,
@@ -194,7 +201,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
 
               Center(
                 child: Text(
-                  'Position qr code inside the frame',
+                  context.l10n.positionQrInsideFrame,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -204,7 +211,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
               ),
               Center(
                 child: Text(
-                  'scanning happens automatically',
+                  context.l10n.scanningAutomatically,
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     color: const Color(0xFF94A3B8),
@@ -220,7 +227,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      'Or enter manually',
+                      context.l10n.orEnterManually,
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: const Color(0xFF94A3B8),
@@ -234,7 +241,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
 
               // 6. 14-Digit Serial Number Input
               Text(
-                '14-digit serial number',
+                context.l10n.fourteenDigitSerialLabel,
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -308,7 +315,7 @@ class _ProductActivationPageState extends State<ProductActivationPage>
                   elevation: 2,
                 ),
                 child: Text(
-                  'Activate with serial number',
+                  context.l10n.activateWithSerialButton,
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -322,6 +329,9 @@ class _ProductActivationPageState extends State<ProductActivationPage>
               Center(
                 child: GestureDetector(
                   onTap: () {
+                    if (di.sl.isRegistered<AppPreferences>()) {
+                      di.sl<AppPreferences>().setGuestSession(true);
+                    }
                     Navigator.of(context).pushNamedAndRemoveUntil(
                       AppRoutes.home,
                       (route) => false,
@@ -329,14 +339,14 @@ class _ProductActivationPageState extends State<ProductActivationPage>
                   },
                   child: RichText(
                     text: TextSpan(
-                      text: "Don’t have your product nearby? ",
+                      text: context.l10n.noProductNearbyPrefix,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF64748B),
                       ),
                       children: [
                         TextSpan(
-                          text: 'continue as guest',
+                          text: context.l10n.continueAsGuest,
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

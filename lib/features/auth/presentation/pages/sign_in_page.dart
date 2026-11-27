@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:obd_vision/core/constants/app_assets.dart';
 import 'package:obd_vision/core/constants/app_routes.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
-import '../widgets/social_auth_button.dart';
 import '../widgets/terms_agreement_checkbox.dart';
 
 /// Pixel-Perfect Sign In Page strictly adhering to Figma Node 67:8513 (Canvas 390x844).
@@ -53,14 +53,10 @@ class _SignInPageState extends State<SignInPage> {
         );
   }
 
-  void _onFacebookSignIn() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Facebook Sign-In coming soon!')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocConsumer<AuthCubit, AuthState>(
@@ -73,11 +69,22 @@ class _SignInPageState extends State<SignInPage> {
                 behavior: SnackBarBehavior.floating,
               ),
             );
+          } else if (state is AuthOAuthPending) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: const Color(0xFF003FB8),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           } else if (state is Authenticated) {
             if (widget.onSignInSuccess != null) {
               widget.onSignInSuccess!();
             } else {
-              Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.home,
+                (route) => false,
+              );
             }
           }
         },
@@ -89,7 +96,7 @@ class _SignInPageState extends State<SignInPage> {
             child: Column(
               children: [
                 // 1. Top Ambient Aura & Logo Header (246px)
-                const AuthHeader(title: 'Sign in to your Account'),
+                AuthHeader(title: l10n.signInTitle),
 
                 // 2. White Card Container (Main Frame: top corner radius 48)
                 Container(
@@ -119,8 +126,8 @@ class _SignInPageState extends State<SignInPage> {
 
                           // Email Field (Figma Node 497:3239)
                           AuthTextField(
-                            label: 'Email address',
-                            hintText: 'Enter your email address',
+                            label: l10n.emailAddressLabel,
+                            hintText: l10n.enterEmailHint,
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                           ),
@@ -128,8 +135,8 @@ class _SignInPageState extends State<SignInPage> {
 
                           // Password Field (Figma Node 497:3256)
                           AuthTextField(
-                            label: 'Password',
-                            hintText: 'Enter your password',
+                            label: l10n.passwordLabel,
+                            hintText: l10n.enterPasswordHint,
                             controller: _passwordController,
                             isPassword: true,
                             isPasswordVisible: _isPasswordVisible,
@@ -143,14 +150,14 @@ class _SignInPageState extends State<SignInPage> {
 
                           // "Forgot password?" Action (Figma Node 492:2964)
                           Align(
-                            alignment: Alignment.centerRight,
+                            alignment: AlignmentDirectional.centerEnd,
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.of(context)
                                     .pushNamed(AppRoutes.forgotPassword);
                               },
                               child: Text(
-                                'Forgot password?',
+                                l10n.forgotPasswordQuestion,
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -170,12 +177,16 @@ class _SignInPageState extends State<SignInPage> {
                               });
                             },
                             onUserAgreementTap: () {
-                              Navigator.of(context)
-                                  .pushNamed(AppRoutes.privacyData);
+                              AppActions.showLegalSheet(
+                                context,
+                                isPrivacyPolicy: false,
+                              );
                             },
                             onPrivacyPolicyTap: () {
-                              Navigator.of(context)
-                                  .pushNamed(AppRoutes.privacyData);
+                              AppActions.showLegalSheet(
+                                context,
+                                isPrivacyPolicy: true,
+                              );
                             },
                           ),
                           const SizedBox(height: 24),
@@ -204,7 +215,7 @@ class _SignInPageState extends State<SignInPage> {
                                       ),
                                     )
                                   : Text(
-                                      'Sign in',
+                                      l10n.signInButton,
                                       style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -215,51 +226,97 @@ class _SignInPageState extends State<SignInPage> {
                           ),
                           const SizedBox(height: 24),
 
-                          // "other way to sign in" (Figma Node 77:238)
-                          Center(
-                            child: Text(
-                              'other way to sign in',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.normal,
-                                color: const Color(0xFF757575),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Social Logins (Google & Facebook / Figma Node 492:2990 & 492:2984)
+                          // Divider + "other way to sign in"
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SocialAuthButton(
-                                onTap: _onGoogleSignIn,
-                                icon: Image.asset(
-                                  AppAssets.signinIllustration,
-                                  width: 26,
-                                  height: 26,
+                              const Expanded(
+                                child: Divider(
+                                  color: Color(0xFFE2E8F0),
+                                  thickness: 1,
                                 ),
                               ),
-                              const SizedBox(width: 20),
-                              SocialAuthButton(
-                                onTap: _onFacebookSignIn,
-                                icon: SvgPicture.asset(
-                                  'assets/icons/signin_icon_9.svg',
-                                  width: 12,
-                                  height: 22,
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  l10n.otherWayToSignIn,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF757575),
+                                  ),
+                                ),
+                              ),
+                              const Expanded(
+                                child: Divider(
+                                  color: Color(0xFFE2E8F0),
+                                  thickness: 1,
                                 ),
                               ),
                             ],
                           ),
+                          const SizedBox(height: 16),
+
+                          // Full-width Stylish Google Sign-In Container
+                          Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFD8E2F0),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF003FB8)
+                                      .withValues(alpha: 0.07),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: isLoading ? null : _onGoogleSignIn,
+                                borderRadius: BorderRadius.circular(16),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        AppAssets.signinIllustration,
+                                        width: 22,
+                                        height: 22,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        l10n.continueWithGoogle,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF0F172A),
+                                          letterSpacing: 0.1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24),
 
-                          // "Don't have an account? Create Account" (Figma Node 77:247 & 492:3015)
+                          // "Don't have an account? Create Account"
                           Center(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'Don’t have an account? ',
+                                  l10n.dontHaveAccountPrefix,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
@@ -272,7 +329,7 @@ class _SignInPageState extends State<SignInPage> {
                                         .pushNamed(AppRoutes.signUp);
                                   },
                                   child: Text(
-                                    'Create Account',
+                                    l10n.createAccount,
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,

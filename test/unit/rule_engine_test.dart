@@ -66,5 +66,29 @@ void main() {
       final violations = engine.evaluate(evidence);
       expect(violations.isEmpty, isTrue);
     });
+
+    test('Returns Arabic findings when isArabic is true and pure English when false', () {
+      final arabicRegex = RegExp(r'[\u0600-\u06FF]');
+      final evidence = MeasuredEvidence(
+        detectedDtcs: const [],
+        coolantTempC: 118.0,
+        batteryVoltage: 11.2,
+        engineRpm: 2000,
+        longTermFuelTrimPercent: 25.0,
+        measuredAt: DateTime(2026),
+      );
+
+      final arViolations = engine.evaluate(evidence, isArabic: true);
+      final enViolations = engine.evaluate(evidence, isArabic: false);
+
+      expect(arViolations.length, 3);
+      expect(enViolations.length, 3);
+      for (final v in arViolations) {
+        expect(arabicRegex.hasMatch(v.description), isTrue);
+      }
+      for (final v in enViolations) {
+        expect(arabicRegex.hasMatch(v.description), isFalse);
+      }
+    });
   });
 }

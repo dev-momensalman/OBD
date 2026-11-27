@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../injection_container.dart' as di;
 import '../bloc/workshops_cubit.dart';
 import '../bloc/workshops_state.dart';
@@ -36,7 +37,63 @@ class _ServiceCentersView extends StatefulWidget {
 
 class _ServiceCentersViewState extends State<_ServiceCentersView> {
   int _selectedViewTab = 0; // 0: List, 1: Map
+  int _filterMode = 0; // 0: all, 1: openOnly, 2: highestRated
   final _searchController = TextEditingController();
+
+  void _showFilterSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final l10n = context.l10n;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.apps_rounded, color: Color(0xFF003FB8)),
+                title: Text(l10n.filterAllCenters),
+                trailing: _filterMode == 0
+                    ? const Icon(Icons.check_rounded, color: Color(0xFF003FB8))
+                    : null,
+                onTap: () {
+                  setState(() => _filterMode = 0);
+                  Navigator.of(ctx).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.access_time_filled_rounded,
+                    color: Color(0xFF16A34A)),
+                title: Text(l10n.filterOpenNow),
+                trailing: _filterMode == 1
+                    ? const Icon(Icons.check_rounded, color: Color(0xFF003FB8))
+                    : null,
+                onTap: () {
+                  setState(() => _filterMode = 1);
+                  Navigator.of(ctx).pop();
+                },
+              ),
+              ListTile(
+                leading:
+                    const Icon(Icons.star_rounded, color: Color(0xFFF59E0B)),
+                title: Text(l10n.filterHighestRated),
+                trailing: _filterMode == 2
+                    ? const Icon(Icons.check_rounded, color: Color(0xFF003FB8))
+                    : null,
+                onTap: () {
+                  setState(() => _filterMode = 2);
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -91,7 +148,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                                     context.read<WorkshopsCubit>().filterCenters(val);
                                   },
                                   decoration: InputDecoration(
-                                    hintText: 'Search by name or area',
+                                    hintText: context.l10n.searchCenterHint,
                                     hintStyle: GoogleFonts.inter(
                                       fontSize: 13,
                                       color: const Color(0xFF94A3B8),
@@ -117,7 +174,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                         child: IconButton(
                           icon: const Icon(Icons.tune_rounded,
                               color: Color(0xFF003FB8), size: 20),
-                          onPressed: () {},
+                          onPressed: _showFilterSheet,
                         ),
                       ),
                     ],
@@ -154,7 +211,12 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                           ),
                         );
                       } else if (state is WorkshopsLoaded) {
-                        final centers = state.centers;
+                        var centers = List.of(state.centers);
+                        if (_filterMode == 1) {
+                          centers = centers.where((c) => c.isOpen).toList();
+                        } else if (_filterMode == 2) {
+                          centers.sort((a, b) => b.rating.compareTo(a.rating));
+                        }
 
                         if (_selectedViewTab == 1) {
                           return ServiceCentersMapView(centers: centers);
@@ -168,7 +230,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  '${centers.length} centers near you',
+                                  context.l10n.centersNearYou(centers.length),
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -178,7 +240,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                                 Row(
                                   children: [
                                     Text(
-                                      'Nearest first',
+                                      context.l10n.nearestFirst,
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -258,7 +320,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'List',
+                      context.l10n.listViewTab,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: _selectedViewTab == 0
@@ -305,7 +367,7 @@ class _ServiceCentersViewState extends State<_ServiceCentersView> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Map',
+                      context.l10n.mapViewTab,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: _selectedViewTab == 1

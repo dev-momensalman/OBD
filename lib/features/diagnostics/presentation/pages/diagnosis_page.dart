@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/history/presentation/bloc/history_cubit.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../injection_container.dart' as di;
 import '../bloc/dashboard_cubit.dart';
@@ -71,6 +73,11 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
       listener: (context, state) {
         if (state.scanStatus == ScanStatus.completed) {
           _progressTicker?.cancel();
+          if (state.latestReport != null) {
+            try {
+              context.read<HistoryCubit>().recordScanReport(state.latestReport!);
+            } catch (_) {}
+          }
           setState(() {
             _scanProgress = 1.0;
             _currentStep = 3;
@@ -79,7 +86,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
           _progressTicker?.cancel();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.errorMessage ?? 'ECU communication error'),
+              content: Text(state.errorMessage ?? context.l10n.ecuCommunicationError),
               backgroundColor: Colors.red,
             ),
           );
@@ -103,7 +110,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
                     children: [
                       if (widget.onBack != null || _currentStep > 1)
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          icon: Icon(context.backIcon,
                               color: Color(0xFF0F172A), size: 20),
                           onPressed: () {
                             if (_currentStep > 1) {
@@ -119,10 +126,10 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
                         child: Center(
                           child: Text(
                             _currentStep == 1
-                                ? 'Check before you scan'
+                                ? context.l10n.checkBeforeYouScan
                                 : _currentStep == 2
-                                    ? 'Scan your vehicle'
-                                    : 'Scan completed',
+                                    ? context.l10n.scanYourVehicle
+                                    : context.l10n.scanCompleted,
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -139,7 +146,7 @@ class _DiagnosisPageState extends State<DiagnosisPage> {
                   // Step indicator: "SCAN - X OF 3"
                   Center(
                     child: Text(
-                      'SCAN - $_currentStep OF 3',
+                      context.l10n.scanStepIndicator(_currentStep),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

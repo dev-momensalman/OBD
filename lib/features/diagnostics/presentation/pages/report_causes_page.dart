@@ -1,31 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/constants/app_routes.dart';
+import 'package:obd_vision/core/constants/app_routes.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/history/domain/entities/activity_log_entity.dart';
+import '../../domain/entities/diagnostic_report.dart';
+import '../../domain/entities/ranked_cause.dart';
+import '../bloc/dashboard_cubit.dart';
 
 /// Authentic Report Causes Screen matching Figma Node 253:979
-/// Displays AI-estimated root causes for diagnostic trouble codes ranked by likelihood.
+/// Displays AI-estimated root causes from [DashboardCubit] ranked by likelihood.
 class ReportCausesPage extends StatefulWidget {
-  const ReportCausesPage({super.key});
+  final DiagnosticReport? reportArg;
+  final ActivityLogEntity? historyLog;
+
+  const ReportCausesPage({super.key, this.reportArg, this.historyLog});
 
   @override
   State<ReportCausesPage> createState() => _ReportCausesPageState();
 }
 
 class _ReportCausesPageState extends State<ReportCausesPage> {
+  static const List<RankedCause> _fallbackCauses = [
+    RankedCause(
+      cause: 'Worn spark plug',
+      probability: 0.93,
+      description: 'A common cause of cylinder 1 misfire',
+    ),
+    RankedCause(
+      cause: 'Faulty ignition coil',
+      probability: 0.65,
+      description: 'Often leads to misfires in multiple cylinders',
+    ),
+    RankedCause(
+      cause: 'Clogged fuel injector',
+      probability: 0.22,
+      description: 'Can cause poor fuel delivery and misfires',
+    ),
+  ];
+
+  DiagnosticReport? _readReport(BuildContext context) {
+    if (widget.reportArg != null) return widget.reportArg;
+    try {
+      return context.watch<DashboardCubit>().state.latestReport;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final report = _readReport(context);
+    final arabicFallbackCauses = context.isArabic
+        ? const [
+            RankedCause(
+              cause: 'تلف أو اتساخ شمعات الاحتراق (البوجيهات)',
+              probability: 0.93,
+              description: 'سبب شائع لتقطيع الاحتراق في الأسطوانة الأولى',
+            ),
+            RankedCause(
+              cause: 'عطل في موبينة الإشعال',
+              probability: 0.65,
+              description: 'يؤدي غالباً إلى عدم انتظام الاحتراق بالأسطوانات',
+            ),
+            RankedCause(
+              cause: 'انسداد في رشاش الوقود (البخاخ)',
+              probability: 0.22,
+              description: 'يسبب ضعف ضخ الوقود وتقطيع المحرك',
+            ),
+          ]
+        : _fallbackCauses;
+    final causes = (report != null && report.rankedCauses.isNotEmpty)
+        ? report.rankedCauses
+        : arabicFallbackCauses;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF242424), size: 20),
+          icon: Icon(context.backIcon,
+              color: const Color(0xFF242424), size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Report',
+          l10n.reportTitle,
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -37,7 +99,20 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
           IconButton(
             icon: const Icon(Icons.share_outlined,
                 color: Color(0xFF242424), size: 22),
-            onPressed: () {},
+            onPressed: () {
+              final buffer = StringBuffer('${l10n.reportTitle} - ${l10n.causesTab}\n');
+              for (final c in causes) {
+                buffer.writeln(
+                  '• ${c.cause} (${(c.probability * 100).round()}%): ${c.description}',
+                );
+              }
+              buffer.writeln('\n${l10n.srsDisclaimer}');
+              AppActions.copyText(
+                context,
+                buffer.toString(),
+                feedback: l10n.reportCopiedMsg,
+              );
+            },
           ),
         ],
       ),
@@ -67,7 +142,10 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.of(context).pushReplacementNamed(
-                                    AppRoutes.reportSummary);
+                                  AppRoutes.reportSummary,
+                                  arguments:
+                                      widget.reportArg ?? widget.historyLog,
+                                );
                               },
                               child: Container(
                                 decoration: BoxDecoration(
@@ -76,7 +154,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  'Summary',
+                                  l10n.summaryTab,
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -94,7 +172,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Causes',
+                                l10n.causesTab,
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -109,7 +187,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
 
                     const SizedBox(height: 20),
 
-                    // 2. Subheader: AI Estimate Pill & Ranked text (Figma Node 253:1131)
+                    // 2. Subheader: AI Estimate Pill & Ranked text
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -131,7 +209,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'AI estimate',
+                                l10n.aiEstimateTitle,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -142,7 +220,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                           ),
                         ),
                         Text(
-                          'Ranked by likelihood',
+                          l10n.rankedByLikelihood,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.normal,
@@ -154,32 +232,34 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
 
                     const SizedBox(height: 16),
 
-                    // 3. Cause Card 1: Worn spark plug (93%)
-                    _buildCauseCard(
-                      title: 'Worn spark plug',
-                      subtitle: 'A common cause of cylinder 1 misfire',
-                      percentage: 93,
-                      hasTrend: true,
-                    ),
+                    // 3. Cause Cards List (Dynamic AI Causes or Fallback)
+                    for (var i = 0; i < causes.length; i++) ...[
+                      _buildCauseCard(
+                        title: causes[i].cause,
+                        subtitle: causes[i].description,
+                        percentage:
+                            (causes[i].probability * 100).round().clamp(5, 99),
+                        hasTrend: i == 0,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
 
-                    const SizedBox(height: 16),
-
-                    // 4. Cause Card 2: Faulty ignition coil (65%)
-                    _buildCauseCard(
-                      title: 'Faulty ignition coil',
-                      subtitle: 'Often leads to misfires in multiple cylinders',
-                      percentage: 65,
-                      hasTrend: false,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // 5. Cause Card 3: Clogged fuel injector (22%)
-                    _buildCauseCard(
-                      title: 'Clogged fuel injector',
-                      subtitle: 'Can cause poor fuel delivery and misfires',
-                      percentage: 22,
-                      hasTrend: false,
+                    // Epistemic Disclaimer (RULES.md)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Text(
+                        report?.safetyDisclaimer ?? l10n.srsDisclaimer,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          height: 1.4,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 24),
@@ -188,7 +268,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
               ),
             ),
 
-            // Bottom CTAs: Find service center & Done (Figma Node 253:1009)
+            // Bottom CTAs: Find service center & Done
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
@@ -198,7 +278,11 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pushNamed(AppRoutes.serviceCentersList);
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          AppRoutes.home,
+                          (route) => false,
+                          arguments: 1,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF003FB8),
@@ -209,7 +293,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                         ),
                       ),
                       child: Text(
-                        'Find service center',
+                        l10n.findServiceCenter,
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -236,7 +320,7 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                         ),
                       ),
                       child: Text(
-                        'Done',
+                        l10n.doneButton,
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -285,29 +369,33 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                   children: [
                     Text(
                       title,
+                      textDirection: detectTextDirection(title),
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF19213D),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.normal,
-                        color: const Color(0xFF6D758F),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        textDirection: detectTextDirection(subtitle),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.normal,
+                          color: const Color(0xFF6D758F),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
               if (hasTrend)
                 Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEDE9FE),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEDE9FE),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -319,8 +407,6 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Percentage Bar (Figma Node 264:1758)
           LayoutBuilder(
             builder: (context, constraints) {
               final totalWidth = constraints.maxWidth;
@@ -348,8 +434,8 @@ class _ReportCausesPageState extends State<ReportCausesPage> {
                         ),
                         borderRadius: BorderRadius.circular(100),
                       ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 10),
+                      alignment: AlignmentDirectional.centerEnd,
+                      padding: const EdgeInsetsDirectional.only(end: 10),
                       child: Text(
                         '$percentage%',
                         style: GoogleFonts.inter(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../utils/service_center_l10n.dart';
+import 'package:obd_vision/core/utils/app_actions.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/entities/service_center_entity.dart';
 
@@ -57,7 +60,7 @@ class ServiceCenterListCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        center.name,
+                        ServiceCenterL10n.name(context, center.name),
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -69,7 +72,7 @@ class ServiceCenterListCard extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            '${center.distance} · ',
+                            '${ServiceCenterL10n.distance(context, center.distance)} · ',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: const Color(0xFF64748B),
@@ -86,7 +89,7 @@ class ServiceCenterListCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            center.workingHours,
+                            ServiceCenterL10n.workingHours(context, center.workingHours),
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -100,7 +103,7 @@ class ServiceCenterListCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+                const RtlForwardChevron(color: Color(0xFF94A3B8)),
               ],
             ),
             const SizedBox(height: 10),
@@ -129,7 +132,7 @@ class ServiceCenterListCard extends StatelessWidget {
                         const SizedBox(width: 2),
                       ],
                       Text(
-                        t,
+                        ServiceCenterL10n.tag(context, t),
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -152,10 +155,17 @@ class ServiceCenterListCard extends StatelessWidget {
                   child: SizedBox(
                     height: 36,
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        final phone = center.phoneNumber ?? '+201001234567';
+                        AppActions.copyText(
+                          context,
+                          phone,
+                          feedback: context.l10n.callPhoneCopied(phone),
+                        );
+                      },
                       icon: const Icon(Icons.phone_outlined, size: 15),
                       label: Text(
-                        'Call',
+                        context.l10n.callButton,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -185,7 +195,7 @@ class ServiceCenterListCard extends StatelessWidget {
                       },
                       icon: const Icon(Icons.calendar_month_outlined, size: 15),
                       label: Text(
-                        'Book',
+                        context.l10n.bookButton,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

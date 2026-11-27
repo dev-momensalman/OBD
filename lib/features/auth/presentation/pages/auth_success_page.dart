@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 import '../../../../core/constants/app_routes.dart';
 
 /// Authentic Success Page matching Figma Node 90:326
@@ -51,7 +52,7 @@ class AuthSuccessPage extends StatelessWidget {
 
               // 2. Headline
               Text(
-                'Verification Success',
+                context.l10n.verificationSuccessTitle,
                 style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -63,7 +64,7 @@ class AuthSuccessPage extends StatelessWidget {
 
               // 3. Subtitle
               Text(
-                'Congratulations,\nyou can now explore and diagnose your vehicle.',
+                context.l10n.verificationSuccessSub,
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   height: 1.5,
@@ -92,7 +93,7 @@ class AuthSuccessPage extends StatelessWidget {
                   elevation: 2,
                 ),
                 child: Text(
-                  'Go to home page',
+                  context.l10n.goToHomePage,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

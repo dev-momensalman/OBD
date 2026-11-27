@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Photo Header with PageView Carousel for Center Details (Figma Node 434:1174)
 class CenterPhotoHeader extends StatelessWidget {
@@ -53,7 +54,7 @@ class CenterPhotoHeader extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '$centerName · Photo ${index + 1}',
+                        '$centerName · ${context.l10n.photoNumber(index + 1)}',
                         style: GoogleFonts.inter(
                           color: Colors.white54,
                           fontSize: 12,

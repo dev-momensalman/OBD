@@ -4,6 +4,9 @@ import '../../domain/entities/vehicle_entity.dart';
 abstract class VehicleState extends Equatable {
   const VehicleState();
 
+  VehicleEntity? get activeVehicle =>
+      this is VehicleLoaded ? (this as VehicleLoaded).currentVehicle : null;
+
   @override
   List<Object?> get props => [];
 }

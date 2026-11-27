@@ -1,9 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:obd_vision/core/services/app_preferences.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
+import 'package:obd_vision/features/workshops/presentation/utils/service_center_l10n.dart';
+import 'package:obd_vision/features/diagnostics/presentation/widgets/dashboard_cubit_scope.dart';
+import 'package:obd_vision/features/settings/presentation/bloc/settings_cubit.dart';
+import 'package:obd_vision/features/vehicle/presentation/bloc/vehicle_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../injection_container.dart' as di;
 import '../../../diagnostics/presentation/bloc/dashboard_cubit.dart';
 import '../../../diagnostics/presentation/bloc/dashboard_state.dart';
+import '../../../diagnostics/presentation/pages/cockpit_hud_page.dart';
 import '../../../diagnostics/presentation/pages/diagnosis_page.dart';
 import '../../../history/presentation/pages/activity_history_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
@@ -64,10 +72,41 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  String _activeVehicleName(BuildContext context) {
+    try {
+      final current = context.watch<VehicleCubit>().state.activeVehicle;
+      if (current != null) return current.name;
+    } catch (_) {}
+    if (di.sl.isRegistered<VehicleCubit>()) {
+      return di.sl<VehicleCubit>().state.activeVehicle?.name ?? 'Corolla 2018';
+    }
+    return 'Corolla 2018';
+  }
+
+  String _activeDistanceUnit(BuildContext context) {
+    try {
+      return context.watch<SettingsCubit>().state.distanceUnit;
+    } catch (_) {}
+    if (di.sl.isRegistered<SettingsCubit>()) {
+      return di.sl<SettingsCubit>().state.distanceUnit;
+    }
+    return 'km';
+  }
+
+  String _activeTempUnit(BuildContext context) {
+    try {
+      return context.watch<SettingsCubit>().state.tempUnit;
+    } catch (_) {}
+    if (di.sl.isRegistered<SettingsCubit>()) {
+      return di.sl<SettingsCubit>().state.tempUnit;
+    }
+    return '°C';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<DashboardCubit>(
-      create: (_) => di.sl.isRegistered<DashboardCubit>()
+    return DashboardCubitScope(
+      create: () => di.sl.isRegistered<DashboardCubit>()
           ? di.sl<DashboardCubit>()
           : DashboardCubit(
               streamLiveTelemetryUseCase: di.sl(),
@@ -127,10 +166,10 @@ class _HomePageState extends State<HomePage> {
             children: [
               // 1. Vehicle Header (Corolla 2018 + Dynamic OBD-II connection status)
               HomeHeader(
-                vehicleName: 'Corolla 2018',
+                vehicleName: _activeVehicleName(context),
                 connectionText: isConnected
-                    ? 'Connected · OBD-II v2.4'
-                    : 'Connecting to OBD-II...',
+                    ? context.l10n.connectedObdLabel
+                    : context.l10n.connectingObdLabel,
                 isConnected: isConnected,
                 onVehicleTap: () {
                   Navigator.of(context).pushNamed(AppRoutes.myVehicle);
@@ -150,8 +189,8 @@ class _HomePageState extends State<HomePage> {
                 warningTitle: (state.latestReport != null &&
                         state.latestReport!.dtcs.isNotEmpty)
                     ? state.latestReport!.dtcs.first.description
-                    : 'Coolant temperature\ntrending high',
-                warningSubtitle: 'Last scan today, 09:40 · Inspect sensor',
+                    : context.l10n.defaultWarningTitle,
+                warningSubtitle: context.l10n.defaultWarningSubtitle,
                 onRunDiagnosis: () {
                   _onNavTap(2);
                 },
@@ -161,25 +200,71 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
 
-              // 3. Live Dynamic Telemetry Section (Driven by 10Hz StreamLiveTelemetryUseCase)
+              // 3. Live Dynamic Digital Cockpit Cluster (10Hz StreamLiveTelemetryUseCase)
               LiveTelemetrySection(
+                speedKmH: telemetry?.vehicleSpeedKmH ?? 0.0,
                 engineRpm: rpm,
                 coolantTemp: coolant,
+                tempUnit: _activeTempUnit(context),
+                distanceUnit: _activeDistanceUnit(context),
                 alternatorVoltage: voltage,
+                maxSpeedKmH: state.maxSpeedKmH,
+                sessionDuration: state.sessionDuration,
+                isConnected: isConnected,
+                isSimulated: state.isSimulatedMode,
+                dtcCount: state.latestReport?.dtcs.length ?? 0,
                 onSeeAll: () {
                   Navigator.of(context).pushNamed(AppRoutes.liveData);
+                },
+                onOpenFullscreen: () {
+                  final dashboardCubit = context.read<DashboardCubit>();
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => BlocProvider<DashboardCubit>.value(
+                        value: dashboardCubit,
+                        child: const CockpitHudPage(),
+                      ),
+                    ),
+                  );
+                },
+                onDtcTap: () {
+                  if (state.latestReport != null) {
+                    Navigator.of(context).pushNamed(
+                      AppRoutes.reportSummary,
+                      arguments: state.latestReport,
+                    );
+                  } else {
+                    _onNavTap(2);
+                  }
                 },
               ),
               const SizedBox(height: 20),
 
-              // 4. Active Workshop Service (Stage 4/5 - Al-Nour Service Center)
-              ActiveWorkshopCard(
-                statusText: 'Repair in progress',
-                stageText: 'Stage 4/5',
-                centerName: 'Al-Nour Service Center',
-                serviceType: 'Radiator Flush',
-                onTrack: () {
-                  _onNavTap(1);
+              // 4. Active Workshop Service
+              Builder(
+                builder: (context) {
+                  Map<String, dynamic>? booking;
+                  if (di.sl.isRegistered<AppPreferences>()) {
+                    final raw = di.sl<AppPreferences>().savedActiveBookingJson;
+                    if (raw != null && raw.isNotEmpty) {
+                      try {
+                        booking = jsonDecode(raw) as Map<String, dynamic>;
+                      } catch (_) {}
+                    }
+                  }
+                  final centerName = booking?['centerName'] as String?;
+                  final schedule = booking?['schedule'] as String?;
+                  return ActiveWorkshopCard(
+                    statusText: context.l10n.repairInProgress,
+                    stageText: context.l10n.stageLabel,
+                    centerName: centerName != null
+                        ? ServiceCenterL10n.name(context, centerName)
+                        : context.l10n.defaultCenterName,
+                    serviceType: schedule ?? context.l10n.defaultServiceType,
+                    onTrack: () {
+                      _onNavTap(1);
+                    },
+                  );
                 },
               ),
 

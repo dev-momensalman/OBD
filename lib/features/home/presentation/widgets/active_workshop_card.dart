@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:obd_vision/core/utils/l10n_extensions.dart';
 
 /// Active Workshop Service Section matching Figma Node 274:983
 /// Features active service tracker (e.g. Al-Nour Service Center - Radiator Flush / Stage 4/5).
@@ -34,7 +35,7 @@ class ActiveWorkshopCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Active Workshop Service',
+                context.l10n.activeWorkshopService,
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -45,7 +46,7 @@ class ActiveWorkshopCard extends StatelessWidget {
               GestureDetector(
                 onTap: onTrack,
                 child: Text(
-                  'Track',
+                  context.l10n.trackAction,
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -170,8 +171,7 @@ class ActiveWorkshopCard extends StatelessWidget {
                     ),
 
                     // Chevron Right Arrow
-                    const Icon(
-                      Icons.chevron_right_rounded,
+                    const RtlForwardChevron(
                       color: Color(0xFF94A3B8),
                       size: 22,
                     ),
