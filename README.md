@@ -7,7 +7,7 @@
 
 <br/>
 
-[![Download APK](https://img.shields.io/badge/⬇️%20Download%20APK-v1.0.0%20(65.9%20MB)-0B5ED7?style=for-the-badge&logo=android&logoColor=white)](https://github.com/dev-momensalman/OBD/raw/release/app-release.apk)
+[![Download APK](https://img.shields.io/badge/⬇️%20Download%20APK-v1.0.0%20(68.8%20MB)-0B5ED7?style=for-the-badge&logo=android&logoColor=white)](https://github.com/dev-momensalman/OBD/raw/release/app-release.apk)
 [![Release Branch](https://img.shields.io/badge/Release%20Build-v1.0.0-22c55e?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dev-momensalman/OBD/tree/release)
 
 <br/>
@@ -29,7 +29,7 @@
 | :--- | :--- |
 | **اسم الملف / File Name** | `app-release.apk` |
 | **الإصدار / Version** | `v1.0.0 (Build 1)` |
-| **الحجم / File Size** | `65.9 MB` |
+| **الحجم / File Size** | `68.8 MB` |
 | **نظام التشغيل / OS** | Android 8.0 (API 26) فما فوق |
 | **رابط التحميل المباشر** | [🔗 اضغط هنا للتحميل المباشر (Direct Download)](https://github.com/dev-momensalman/OBD/raw/release/app-release.apk) |
 
