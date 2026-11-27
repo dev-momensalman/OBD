@@ -44,6 +44,8 @@ class AppAssets {
   // Dashboard & Vehicle
   static const String vehicleModel = '$_imagesPath/home_raw1.png';
   static const String cockpitClusterSkin = '$_imagesPath/cockpit_cluster_skin.png';
+  static const String cockpitClusterSkinLight =
+      '$_imagesPath/cockpit_cluster_skin_light.png';
 
   // Vector Icons (SVGs)
   static const String splashLogoSvg = '$_iconsPath/splash_asset_4.svg';

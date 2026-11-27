@@ -42,7 +42,8 @@ class CockpitClusterView extends StatelessWidget {
     this.onDtcTap,
   });
 
-  static const double _skinAspectRatio = 940.0 / 344.0;
+  static const double _darkSkinAspectRatio = 940.0 / 344.0;
+  static const double _lightSkinAspectRatio = 1354.0 / 527.0;
   static const double _maxRpmScale = 7000.0;
 
   @override
@@ -310,6 +311,30 @@ class CockpitClusterView extends StatelessWidget {
     required double speedProgress,
     required double rpmProgress,
   }) {
+    final isLightSurface = !isFullscreen;
+    final aspectRatio =
+        isLightSurface ? _lightSkinAspectRatio : _darkSkinAspectRatio;
+    final skinAsset = isLightSurface
+        ? AppAssets.cockpitClusterSkinLight
+        : AppAssets.cockpitClusterSkin;
+
+    final leftCenterNorm = isLightSurface
+        ? const Offset(0.1976, 0.5180)
+        : const Offset(0.1957, 0.5073);
+    final rightCenterNorm = isLightSurface
+        ? const Offset(0.8047, 0.5180)
+        : const Offset(0.8037, 0.5073);
+
+    final dialBoxFracW = isLightSurface ? (186.0 / 1354.0) : (124.0 / 940.0);
+    final dialBoxFracH = isLightSurface ? (174.0 / 527.0) : (114.0 / 344.0);
+
+    final speedTagColor = isLightSurface
+        ? const Color(0xFF003FB8)
+        : const Color(0xFF22D3EE);
+    final rpmTagColor = isLightSurface
+        ? (speedKmH < 5 ? const Color(0xFF003FB8) : const Color(0xFF059669))
+        : const Color(0xFF60A5FA);
+
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Padding(
@@ -318,21 +343,23 @@ class CockpitClusterView extends StatelessWidget {
           vertical: isFullscreen ? 6 : 8,
         ),
         child: AspectRatio(
-          aspectRatio: _skinAspectRatio,
+          aspectRatio: aspectRatio,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
               final h = constraints.maxHeight;
-              final dialBoxW = w * (124.0 / 940.0);
-              final dialBoxH = h * (114.0 / 344.0);
-              final leftCenter = Offset(w * 0.1957, h * 0.5073);
-              final rightCenter = Offset(w * 0.8037, h * 0.5073);
+              final dialBoxW = w * dialBoxFracW;
+              final dialBoxH = h * dialBoxFracH;
+              final leftCenter =
+                  Offset(w * leftCenterNorm.dx, h * leftCenterNorm.dy);
+              final rightCenter =
+                  Offset(w * rightCenterNorm.dx, h * rightCenterNorm.dy);
 
               return Stack(
                 fit: StackFit.expand,
                 children: [
                   Image.asset(
-                    AppAssets.cockpitClusterSkin,
+                    skinAsset,
                     fit: BoxFit.fill,
                     filterQuality: FilterQuality.high,
                   ),
@@ -350,6 +377,7 @@ class CockpitClusterView extends StatelessWidget {
                             painter: _CockpitDialArcsPainter(
                               speedProgress: animSpeed,
                               rpmProgress: animRpm,
+                              isLightSurface: isLightSurface,
                             ),
                           );
                         },
@@ -365,7 +393,8 @@ class CockpitClusterView extends StatelessWidget {
                     child: _DialCenterReadout(
                       valueText: '$displaySpeed',
                       unitText: speedUnit,
-                      accentColor: const Color(0xFF22D3EE),
+                      accentColor: speedTagColor,
+                      isLightSurface: isLightSurface,
                     ),
                   ),
                   Positioned.fromRect(
@@ -378,7 +407,8 @@ class CockpitClusterView extends StatelessWidget {
                       topTag: engineRpm < 1000 && speedKmH < 5 ? 'N' : 'D',
                       valueText: '$engineRpm',
                       unitText: 'RPM',
-                      accentColor: const Color(0xFF60A5FA),
+                      accentColor: rpmTagColor,
+                      isLightSurface: isLightSurface,
                     ),
                   ),
                 ],
@@ -495,16 +525,22 @@ class _DialCenterReadout extends StatelessWidget {
   final String valueText;
   final String unitText;
   final Color accentColor;
+  final bool isLightSurface;
 
   const _DialCenterReadout({
     this.topTag,
     required this.valueText,
     required this.unitText,
     required this.accentColor,
+    this.isLightSurface = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final valueColor = isLightSurface ? const Color(0xFF0F172A) : Colors.white;
+    final unitColor =
+        isLightSurface ? const Color(0xFF475569) : const Color(0xFF94A3B8);
+
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Column(
@@ -515,8 +551,10 @@ class _DialCenterReadout extends StatelessWidget {
               topTag!,
               style: GoogleFonts.inter(
                 fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: accentColor.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w800,
+                color: isLightSurface
+                    ? accentColor
+                    : accentColor.withValues(alpha: 0.9),
                 height: 1.0,
               ),
             ),
@@ -527,7 +565,7 @@ class _DialCenterReadout extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: valueColor,
               height: 1.05,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
@@ -537,8 +575,8 @@ class _DialCenterReadout extends StatelessWidget {
             unitText,
             style: GoogleFonts.inter(
               fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF94A3B8),
+              fontWeight: FontWeight.w700,
+              color: unitColor,
               height: 1.0,
             ),
           ),
@@ -629,10 +667,12 @@ class _FooterMetricCell extends StatelessWidget {
 class _CockpitDialArcsPainter extends CustomPainter {
   final double speedProgress;
   final double rpmProgress;
+  final bool isLightSurface;
 
   const _CockpitDialArcsPainter({
     required this.speedProgress,
     required this.rpmProgress,
+    this.isLightSurface = false,
   });
 
   static const double _startAngle = 135.0 * (math.pi / 180.0);
@@ -644,11 +684,17 @@ class _CockpitDialArcsPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    final leftCenter = Offset(w * 0.1957, h * 0.5073);
-    final rightCenter = Offset(w * 0.8037, h * 0.5073);
-    final rx = h * (94.0 / 344.0);
-    final ry = h * (89.5 / 344.0);
-    final strokeW = math.max(3.0, h * (16.5 / 344.0));
+    final leftCenter = isLightSurface
+        ? Offset(w * 0.1976, h * 0.5180)
+        : Offset(w * 0.1957, h * 0.5073);
+    final rightCenter = isLightSurface
+        ? Offset(w * 0.8047, h * 0.5180)
+        : Offset(w * 0.8037, h * 0.5073);
+    final rx = isLightSurface ? h * (134.5 / 527.0) : h * (94.0 / 344.0);
+    final ry = isLightSurface ? h * (134.5 / 527.0) : h * (89.5 / 344.0);
+    final strokeW = isLightSurface
+        ? math.max(3.5, h * (23.5 / 527.0))
+        : math.max(3.0, h * (16.5 / 344.0));
 
     _drawSegmentedArc(
       canvas: canvas,
@@ -657,12 +703,19 @@ class _CockpitDialArcsPainter extends CustomPainter {
       ry: ry,
       strokeWidth: strokeW,
       progress: speedProgress,
-      colors: const [
-        Color(0xFF00E5FF),
-        Color(0xFF22D3EE),
-        Color(0xFF34D399),
-        Color(0xFF38BDF8),
-      ],
+      colors: isLightSurface
+          ? const [
+              Color(0xFF003FB8), // Royal Cobalt
+              Color(0xFF0284C7), // Electric Azure
+              Color(0xFF0D9488), // Vivid Teal-Emerald
+              Color(0xFFEA580C), // High-Speed Sport Amber
+            ]
+          : const [
+              Color(0xFF00E5FF),
+              Color(0xFF22D3EE),
+              Color(0xFF34D399),
+              Color(0xFF38BDF8),
+            ],
     );
 
     _drawSegmentedArc(
@@ -672,12 +725,19 @@ class _CockpitDialArcsPainter extends CustomPainter {
       ry: ry,
       strokeWidth: strokeW,
       progress: rpmProgress,
-      colors: const [
-        Color(0xFF00E5FF),
-        Color(0xFF3B82F6),
-        Color(0xFF8B5CF6),
-        Color(0xFFEF4444),
-      ],
+      colors: isLightSurface
+          ? const [
+              Color(0xFF003FB8), // Royal Cobalt
+              Color(0xFF4F46E5), // Deep Indigo
+              Color(0xFFEA580C), // High-Rev Amber
+              Color(0xFFDC2626), // Crimson Redline
+            ]
+          : const [
+              Color(0xFF00E5FF),
+              Color(0xFF3B82F6),
+              Color(0xFF8B5CF6),
+              Color(0xFFEF4444),
+            ],
     );
   }
 
@@ -698,18 +758,24 @@ class _CockpitDialArcsPainter extends CustomPainter {
     final step = _maxSweep / _segmentCount;
     final segSweep = step * 0.72;
 
-    // Outer neon ambient glow behind active segments
+    // Subtle colored halo behind active segments (sharper & darker on light silver surface)
+    final glowColors = isLightSurface
+        ? colors.map((c) => c.withValues(alpha: 0.28)).toList()
+        : colors;
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * 1.35
+      ..strokeWidth = strokeWidth * (isLightSurface ? 1.2 : 1.35)
       ..strokeCap = StrokeCap.butt
       ..shader = SweepGradient(
         startAngle: 0,
         endAngle: _maxSweep,
         transform: const GradientRotation(_startAngle - 0.05),
-        colors: colors,
+        colors: glowColors,
       ).createShader(rect)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, strokeWidth * 0.45);
+      ..maskFilter = MaskFilter.blur(
+        BlurStyle.normal,
+        strokeWidth * (isLightSurface ? 0.25 : 0.45),
+      );
 
     canvas.drawArc(rect, _startAngle, _maxSweep * clamped, false, glowPaint);
 
@@ -734,5 +800,6 @@ class _CockpitDialArcsPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CockpitDialArcsPainter oldDelegate) =>
       oldDelegate.speedProgress != speedProgress ||
-      oldDelegate.rpmProgress != rpmProgress;
+      oldDelegate.rpmProgress != rpmProgress ||
+      oldDelegate.isLightSurface != isLightSurface;
 }
